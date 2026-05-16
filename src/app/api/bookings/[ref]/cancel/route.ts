@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { demoBookings, demoCancellationPolicy, demoGuests } from "@/lib/db/seed";
+import { bookingRefSchema, validationError } from "@/lib/api-validation";
+import { cancelBooking } from "@/lib/db/queries";
 
 const schema = z.object({
   email: z.string().email(),
@@ -12,21 +13,37 @@ export async function POST(
   { params }: { params: Promise<{ ref: string }> },
 ) {
   const { ref } = await params;
+  const decodedRef = decodeURIComponent(ref);
+  const parsedRef = bookingRefSchema.safeParse(decodedRef);
+  if (!parsedRef.success) {
+    return NextResponse.json(validationError("Invalid booking reference"), { status: 400 });
+  }
+
   const parsed = schema.safeParse(await request.json());
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const booking = demoBookings.find((item) => item.bookingRef === decodeURIComponent(ref));
-  const guest = booking ? demoGuests.find((item) => item.id === booking.guestId) : undefined;
-  if (!booking || !guest || guest.email.toLowerCase() !== parsed.data.email.toLowerCase()) {
-    return NextResponse.json({ error: "Booking not found" }, { status: 404 });
+  const result = await cancelBooking({
+    ref: decodedRef,
+    email: parsed.data.email,
+    reason: parsed.data.reason,
+  });
+
+  if (!result.ok) {
+    const statusMap: Record<typeof result.reason, number> = {
+      "not-found": 404,
+      "email-mismatch": 403,
+      "already-cancelled": 409,
+      "past-deadline": 422,
+    };
+    return NextResponse.json({ error: result.reason }, { status: statusMap[result.reason] });
   }
 
   return NextResponse.json({
-    booking: { ...booking, status: "cancelled", paymentStatus: "refunded" },
-    refundAmount: Math.round(booking.paidAmount * (demoCancellationPolicy.refundPct / 100)),
-    policy: demoCancellationPolicy,
+    booking: result.booking,
+    refundAmount: result.refundAmount,
+    policy: result.policy,
     mode: "local-demo",
   });
 }

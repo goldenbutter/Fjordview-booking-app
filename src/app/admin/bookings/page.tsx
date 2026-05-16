@@ -4,15 +4,24 @@ import { Button } from "@/components/ui/button";
 import { TextInput } from "@/components/ui/field";
 import { getAdminSnapshot } from "@/lib/admin-metrics";
 
-export default function AdminBookingsPage() {
-  const snapshot = getAdminSnapshot();
+export default async function AdminBookingsPage() {
+  const snapshot = await getAdminSnapshot();
+
+  if (!snapshot) {
+    return (
+      <main className="space-y-5 p-5">
+        <h1 className="text-3xl font-semibold">Bookings</h1>
+        <p className="mt-1 text-rose-700">Property not found. Run <code>npm run seed</code>.</p>
+      </main>
+    );
+  }
 
   return (
     <main className="space-y-5 p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-3xl font-semibold">Bookings</h1>
-          <p className="mt-1 text-slate-500">Filter, search, and prepare manual walk-in bookings.</p>
+          <p className="mt-1 text-slate-500">{snapshot.recentBookings.length} bookings on record.</p>
         </div>
         <Button>Manual booking</Button>
       </div>

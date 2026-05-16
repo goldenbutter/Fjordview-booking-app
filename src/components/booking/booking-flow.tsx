@@ -6,7 +6,6 @@ import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FieldLabel, SelectInput, TextArea, TextInput } from "@/components/ui/field";
-import { demoBookingStorageKey } from "@/lib/demo-storage";
 import { defaultDateRange } from "@/lib/pricing";
 import { formatCurrency, formatDate, nightsBetween } from "@/lib/utils";
 import type { Locale, PriceBreakdown, Property, RoomType } from "@/types";
@@ -119,9 +118,6 @@ export function BookingFlow({ property }: { property: Property }) {
         throw new Error(typeof payload.error === "string" ? payload.error : "Could not create booking");
       }
       setCreated(payload);
-      const storageKey = demoBookingStorageKey(property.slug);
-      const stored = JSON.parse(localStorage.getItem(storageKey) ?? "[]");
-      localStorage.setItem(storageKey, JSON.stringify([payload, ...stored]));
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not create booking");
     } finally {

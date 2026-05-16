@@ -4,8 +4,23 @@ import { StatCard } from "@/components/admin/admin-cards";
 import { getAdminSnapshot } from "@/lib/admin-metrics";
 import { formatCurrency } from "@/lib/utils";
 
-export default function AdminReportsPage() {
-  const snapshot = getAdminSnapshot();
+export default async function AdminReportsPage() {
+  const snapshot = await getAdminSnapshot();
+
+  if (!snapshot) {
+    return (
+      <main className="space-y-5 p-5">
+        <h1 className="text-3xl font-semibold">Reports</h1>
+        <p className="mt-1 text-rose-700">Property not found.</p>
+      </main>
+    );
+  }
+
+  const directCount = snapshot.recentBookings.filter((b) => b.source === "direct").length;
+  const directPct = snapshot.recentBookings.length > 0
+    ? Math.round((directCount / snapshot.recentBookings.length) * 100)
+    : 0;
+
   return (
     <main className="space-y-5 p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -21,12 +36,12 @@ export default function AdminReportsPage() {
         </Link>
       </div>
       <div className="grid gap-4 md:grid-cols-3">
-        <StatCard label="Occupancy" value={`${snapshot.occupancyPct}%`} detail="By current demo bookings" />
-        <StatCard label="Revenue" value={formatCurrency(snapshot.revenue)} detail="All demo payments" />
-        <StatCard label="Direct bookings" value="50%" detail="Source mix prototype" />
+        <StatCard label="Occupancy" value={`${snapshot.occupancyPct}%`} detail={`${snapshot.occupiedRooms}/${snapshot.totalRooms} occupied`} />
+        <StatCard label="Revenue" value={formatCurrency(snapshot.revenue)} detail="All paid bookings" />
+        <StatCard label="Direct bookings" value={`${directPct}%`} detail={`${directCount} of ${snapshot.recentBookings.length}`} />
       </div>
       <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="mb-4 flex items-center gap-2 font-semibold"><BarChart3 className="h-5 w-5 text-teal-600" /> Monthly trend</div>
+        <div className="mb-4 flex items-center gap-2 font-semibold"><BarChart3 className="h-5 w-5 text-teal-600" /> Monthly trend (placeholder)</div>
         <div className="grid h-56 grid-cols-8 items-end gap-3">
           {[38, 52, 49, 64, 71, 58, 77, 69].map((value, index) => (
             <div key={index} className="flex h-full flex-col justify-end gap-2">

@@ -13,7 +13,7 @@ import {
   Tags,
   Users,
 } from "lucide-react";
-import { demoProperty } from "@/lib/db/seed";
+import { getPropertyBySlug } from "@/lib/db/queries";
 import { env } from "@/lib/env";
 
 const nav = [
@@ -29,7 +29,10 @@ const nav = [
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 
-export default function AdminLayout({ children }: { children: ReactNode }) {
+export default async function AdminLayout({ children }: { children: ReactNode }) {
+  const property = await getPropertyBySlug(env.defaultPropertySlug);
+  const propertyName = property?.name ?? "Admin";
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-950 lg:grid lg:grid-cols-[260px_1fr]">
       <aside className="border-b border-slate-200 bg-white lg:min-h-screen lg:border-b-0 lg:border-r">
@@ -38,8 +41,8 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             <Hotel className="h-5 w-5" />
           </div>
           <div>
-            <div className="font-semibold">{demoProperty.name}</div>
-            <div className="text-xs text-slate-500">Admin prototype</div>
+            <div className="font-semibold">{propertyName}</div>
+            <div className="text-xs text-slate-500">Admin</div>
           </div>
         </div>
         <nav className="flex gap-1 overflow-x-auto px-3 pb-3 lg:block lg:space-y-1 lg:overflow-visible">
@@ -62,7 +65,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         <header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white px-5 py-4">
           <div>
             <div className="text-sm text-slate-500">Signed in as</div>
-            <div className="font-semibold">Demo Admin</div>
+            <div className="font-semibold">{env.localDemoMode ? "Demo Admin" : "Admin"}</div>
           </div>
           <div className="flex items-center gap-3 text-sm">
             <Link href={`/book/${env.defaultPropertySlug}`} className="rounded-md border border-teal-200 px-3 py-2 font-semibold text-teal-700">

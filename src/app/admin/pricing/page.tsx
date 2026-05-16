@@ -3,8 +3,18 @@ import { getAdminSnapshot } from "@/lib/admin-metrics";
 import { calculateNightlyPrice } from "@/lib/pricing";
 import { formatCurrency } from "@/lib/utils";
 
-export default function AdminPricingPage() {
-  const snapshot = getAdminSnapshot();
+export default async function AdminPricingPage() {
+  const snapshot = await getAdminSnapshot();
+
+  if (!snapshot || snapshot.roomTypes.length === 0) {
+    return (
+      <main className="space-y-5 p-5">
+        <h1 className="text-3xl font-semibold">Pricing</h1>
+        <p className="mt-1 text-rose-700">Property not found or has no room types.</p>
+      </main>
+    );
+  }
+
   const previewRoom = snapshot.roomTypes[0];
   const preview = calculateNightlyPrice(previewRoom.basePrice, new Date("2026-06-20"), snapshot.pricingRules);
 

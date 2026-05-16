@@ -1,14 +1,13 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { autoAssignRoom, getAvailableRoomTypes } from "@/lib/availability";
-import { createBookingRef } from "@/lib/booking-ref";
-import { demoBookings, demoGuests, demoProperty } from "@/lib/db/seed";
+import { propertySlugSchema, validationError } from "@/lib/api-validation";
+import { createBooking, getAvailability, getPropertyBySlug } from "@/lib/db/queries";
 import { checkRateLimit, rateLimitKey } from "@/lib/rate-limit";
 
 const schema = z.object({
-  roomTypeId: z.string(),
-  checkIn: z.string(),
-  checkOut: z.string(),
+  roomTypeId: z.string().uuid(),
+  checkIn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  checkOut: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   guestCount: z.number().int().min(1),
   guest: z.object({
     firstName: z.string().min(1),
@@ -31,7 +30,13 @@ export async function POST(
   }
 
   const { slug } = await params;
-  if (slug !== demoProperty.slug) {
+  const parsedSlug = propertySlugSchema.safeParse(slug);
+  if (!parsedSlug.success) {
+    return NextResponse.json(validationError("Invalid property slug"), { status: 400 });
+  }
+
+  const property = await getPropertyBySlug(slug);
+  if (!property) {
     return NextResponse.json({ error: "Property not found" }, { status: 404 });
   }
 
@@ -39,66 +44,48 @@ export async function POST(
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
-
   const input = parsed.data;
-  const available = getAvailableRoomTypes(demoProperty.id, input.checkIn, input.checkOut);
-  const roomType = available.find((room) => room.id === input.roomTypeId);
 
+  if (input.checkOut <= input.checkIn) {
+    return NextResponse.json({ error: "checkOut must be after checkIn" }, { status: 400 });
+  }
+
+  const available = await getAvailability(property.id, input.checkIn, input.checkOut);
+  const roomType = available.find((r) => r.id === input.roomTypeId);
   if (!roomType) {
     return NextResponse.json({ error: "Selected room type is not available" }, { status: 409 });
   }
 
-  const room = autoAssignRoom({
-    propertyId: demoProperty.id,
-    roomTypeId: input.roomTypeId,
-    checkIn: input.checkIn,
-    checkOut: input.checkOut,
-  });
-  const sequence = demoBookings.length + 1;
-  const bookingRef = createBookingRef(demoProperty.bookingRefPrefix, sequence);
-  const guestId = `guest_${input.guest.email.replace(/[^a-z0-9]/gi, "_").toLowerCase()}`;
+  try {
+    const result = await createBooking({
+      propertyId: property.id,
+      roomTypeId: input.roomTypeId,
+      checkIn: input.checkIn,
+      checkOut: input.checkOut,
+      guestCount: input.guestCount,
+      totalPrice: roomType.price.subtotal,
+      currency: property.currency,
+      language: input.guest.language,
+      specialRequests: input.specialRequests,
+      guest: {
+        firstName: input.guest.firstName,
+        lastName: input.guest.lastName,
+        email: input.guest.email,
+        phone: input.guest.phone,
+        country: input.guest.country,
+      },
+    });
 
-  const booking = {
-    id: `booking_${Date.now()}`,
-    propertyId: demoProperty.id,
-    roomId: room?.id,
-    roomTypeId: input.roomTypeId,
-    guestId,
-    bookingRef,
-    status: "confirmed" as const,
-    checkIn: input.checkIn,
-    checkOut: input.checkOut,
-    guestCount: input.guestCount,
-    totalPrice: roomType.price.subtotal,
-    currency: demoProperty.currency,
-    paymentStatus: "fully_paid" as const,
-    paidAmount: roomType.price.subtotal,
-    specialRequests: input.specialRequests,
-    source: "direct" as const,
-    language: input.guest.language,
-    createdAt: new Date().toISOString(),
-  };
-
-  const guest = {
-    id: guestId,
-    propertyId: demoProperty.id,
-    email: input.guest.email,
-    firstName: input.guest.firstName,
-    lastName: input.guest.lastName,
-    phone: input.guest.phone,
-    country: input.guest.country,
-    language: input.guest.language,
-    totalBookings: 1,
-    totalSpent: roomType.price.subtotal,
-  };
-
-  return NextResponse.json({
-    mode: "local-demo",
-    booking,
-    guest,
-    roomType,
-    room,
-    checkoutUrl: `/booking/${bookingRef}?success=true&email=${encodeURIComponent(input.guest.email)}`,
-    existingGuests: demoGuests.length,
-  });
+    return NextResponse.json({
+      mode: "local-demo",
+      booking: result.booking,
+      guest: result.guest,
+      roomType: { ...result.roomType, price: roomType.price },
+      room: result.room,
+      checkoutUrl: `/booking/${result.booking.bookingRef}?success=true&email=${encodeURIComponent(input.guest.email)}`,
+    });
+  } catch (err) {
+    console.error("[bookings.POST]", err);
+    return NextResponse.json({ error: "Could not create booking" }, { status: 500 });
+  }
 }

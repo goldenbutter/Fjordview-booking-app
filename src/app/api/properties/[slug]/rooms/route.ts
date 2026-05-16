@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { propertySlugSchema, validationError } from "@/lib/api-validation";
-import { demoProperty, demoRoomTypes } from "@/lib/db/seed";
+import { getActiveRoomTypes, getPropertyBySlug } from "@/lib/db/queries";
 
 export async function GET(
   _request: Request,
@@ -12,12 +12,11 @@ export async function GET(
     return NextResponse.json(validationError("Invalid property slug"), { status: 400 });
   }
 
-  if (slug !== demoProperty.slug) {
+  const property = await getPropertyBySlug(slug);
+  if (!property) {
     return NextResponse.json({ error: "Property not found" }, { status: 404 });
   }
 
-  return NextResponse.json({
-    property: demoProperty,
-    roomTypes: demoRoomTypes.filter((roomType) => roomType.active),
-  });
+  const roomTypes = await getActiveRoomTypes(property.id);
+  return NextResponse.json({ property, roomTypes });
 }

@@ -3,13 +3,23 @@ import { Badge } from "@/components/ui/badge";
 import { getAdminSnapshot } from "@/lib/admin-metrics";
 import { formatCurrency } from "@/lib/utils";
 
-export default function AdminGuestsPage() {
-  const snapshot = getAdminSnapshot();
+export default async function AdminGuestsPage() {
+  const snapshot = await getAdminSnapshot();
+
+  if (!snapshot) {
+    return (
+      <main className="space-y-5 p-5">
+        <h1 className="text-3xl font-semibold">Guests</h1>
+        <p className="mt-1 text-rose-700">Property not found.</p>
+      </main>
+    );
+  }
+
   return (
     <main className="space-y-5 p-5">
       <div>
         <h1 className="text-3xl font-semibold">Guests</h1>
-        <p className="mt-1 text-slate-500">Guest profiles and booking history.</p>
+        <p className="mt-1 text-slate-500">{snapshot.guests.length} guests on record.</p>
       </div>
       <div className="grid gap-4 md:grid-cols-2">
         {snapshot.guests.map((guest) => (
@@ -19,7 +29,7 @@ export default function AdminGuestsPage() {
                 <h2 className="text-xl font-semibold">{guest.firstName} {guest.lastName}</h2>
                 <div className="mt-2 space-y-1 text-sm text-slate-500">
                   <div className="flex items-center gap-2"><Mail className="h-4 w-4" /> {guest.email}</div>
-                  <div className="flex items-center gap-2"><Phone className="h-4 w-4" /> {guest.phone}</div>
+                  {guest.phone ? <div className="flex items-center gap-2"><Phone className="h-4 w-4" /> {guest.phone}</div> : null}
                 </div>
               </div>
               <Badge tone="teal">{guest.language.toUpperCase()}</Badge>

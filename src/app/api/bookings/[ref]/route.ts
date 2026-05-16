@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { bookingRefSchema, validationError } from "@/lib/api-validation";
-import { demoBookings, demoGuests, demoProperty, demoRoomTypes, demoRooms } from "@/lib/db/seed";
+import { getBookingByRef } from "@/lib/db/queries";
 
 const bookingLookupQuerySchema = z.object({
   email: z.string().email().optional(),
@@ -26,23 +26,10 @@ export async function GET(
     return NextResponse.json(validationError("Invalid email"), { status: 400 });
   }
 
-  const email = parsedQuery.data.email?.toLowerCase();
-  const booking = demoBookings.find((item) => item.bookingRef === decodedRef);
-
-  if (!booking) {
-    return NextResponse.json({ error: "Booking not found in seed data. Local browser-created bookings are loaded client-side." }, { status: 404 });
+  const result = await getBookingByRef(decodedRef, parsedQuery.data.email);
+  if (!result) {
+    return NextResponse.json({ error: "Booking not found" }, { status: 404 });
   }
 
-  const guest = demoGuests.find((item) => item.id === booking.guestId);
-  if (email && guest?.email.toLowerCase() !== email) {
-    return NextResponse.json({ error: "Email does not match booking" }, { status: 403 });
-  }
-
-  return NextResponse.json({
-    property: demoProperty,
-    booking,
-    guest,
-    roomType: demoRoomTypes.find((item) => item.id === booking.roomTypeId),
-    room: demoRooms.find((item) => item.id === booking.roomId),
-  });
+  return NextResponse.json(result);
 }

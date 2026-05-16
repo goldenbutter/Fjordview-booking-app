@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { getAvailableRoomTypes } from "@/lib/availability";
 import { dateStringSchema, propertySlugSchema, validationError } from "@/lib/api-validation";
-import { demoProperty } from "@/lib/db/seed";
+import { getAvailability, getPropertyBySlug } from "@/lib/db/queries";
 import { checkRateLimit, rateLimitKey } from "@/lib/rate-limit";
 
 const availabilityQuerySchema = z
@@ -29,7 +28,8 @@ export async function GET(
     return NextResponse.json(validationError("Invalid property slug"), { status: 400 });
   }
 
-  if (slug !== demoProperty.slug) {
+  const property = await getPropertyBySlug(slug);
+  if (!property) {
     return NextResponse.json({ error: "Property not found" }, { status: 404 });
   }
 
@@ -46,8 +46,6 @@ export async function GET(
   }
   const { checkIn, checkOut } = parsedQuery.data;
 
-  return NextResponse.json({
-    property: demoProperty,
-    rooms: getAvailableRoomTypes(demoProperty.id, checkIn, checkOut),
-  });
+  const rooms = await getAvailability(property.id, checkIn, checkOut);
+  return NextResponse.json({ property, rooms });
 }

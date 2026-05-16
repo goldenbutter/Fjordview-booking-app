@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { bookingGuestName, roomNumber, roomTypeName } from "@/lib/admin-metrics";
-import { demoBookings, demoProperty } from "@/lib/db/seed";
+import { getAdminSnapshot } from "@/lib/admin-metrics";
 
 function csvEscape(value: string | number | undefined) {
   const text = String(value ?? "");
@@ -11,13 +10,18 @@ function csvEscape(value: string | number | undefined) {
 }
 
 export async function GET() {
+  const snapshot = await getAdminSnapshot();
+  if (!snapshot) {
+    return NextResponse.json({ error: "Property not found" }, { status: 404 });
+  }
+
   const rows = [
     ["booking_ref", "guest", "room", "room_type", "check_in", "check_out", "status", "payment_status", "source", "total_ore"],
-    ...demoBookings.map((booking) => [
+    ...snapshot.recentBookings.map((booking) => [
       booking.bookingRef,
-      bookingGuestName(booking.guestId),
-      roomNumber(booking.roomId),
-      roomTypeName(booking.roomTypeId),
+      booking.guestName,
+      booking.roomLabel,
+      booking.roomTypeLabel,
       booking.checkIn,
       booking.checkOut,
       booking.status,
@@ -31,7 +35,7 @@ export async function GET() {
   return new NextResponse(csv, {
     headers: {
       "content-type": "text/csv; charset=utf-8",
-      "content-disposition": `attachment; filename=${demoProperty.slug}-booking-report.csv`,
+      "content-disposition": `attachment; filename=${snapshot.property.slug}-booking-report.csv`,
     },
   });
 }

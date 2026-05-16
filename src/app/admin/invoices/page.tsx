@@ -3,14 +3,23 @@ import { FileText } from "lucide-react";
 import { BookingTable } from "@/components/admin/admin-cards";
 import { getAdminSnapshot } from "@/lib/admin-metrics";
 
-export default function AdminInvoicesPage() {
-  const snapshot = getAdminSnapshot();
+export default async function AdminInvoicesPage() {
+  const snapshot = await getAdminSnapshot();
+
+  if (!snapshot) {
+    return (
+      <main className="space-y-5 p-5">
+        <h1 className="text-3xl font-semibold">Invoices</h1>
+        <p className="mt-1 text-rose-700">Property not found.</p>
+      </main>
+    );
+  }
 
   return (
     <main className="space-y-5 p-5">
       <div>
         <h1 className="text-3xl font-semibold">Invoices</h1>
-        <p className="mt-1 text-slate-500">Generate local-demo invoice text for confirmed bookings.</p>
+        <p className="mt-1 text-slate-500">Generate invoice text for confirmed bookings.</p>
       </div>
       <div className="grid gap-3">
         {snapshot.recentBookings.map((booking) => (

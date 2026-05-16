@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { BookingFlow } from "@/components/booking/booking-flow";
-import { demoProperty } from "@/lib/db/seed";
+import { getPropertyBySlug } from "@/lib/db/queries";
 
 export default async function BookingPage({
   params,
@@ -8,10 +8,9 @@ export default async function BookingPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-
-  if (slug !== demoProperty.slug) {
+  const property = await getPropertyBySlug(slug);
+  if (!property) {
     notFound();
   }
-
-  return <BookingFlow property={demoProperty} />;
+  return <BookingFlow property={property} />;
 }
