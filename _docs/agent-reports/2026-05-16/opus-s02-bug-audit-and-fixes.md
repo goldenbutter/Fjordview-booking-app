@@ -33,7 +33,9 @@ queued for the next session.
 | 23:12 | `cc12710` | fix(booking-flow): clear hardcoded guest pre-fill, add photo fallback, gate submit on required fields |
 | 23:18 | `1a9cc62` | fix: validate UUID vs booking-ref in getBookingDetail + invoice routes |
 | 23:25 | `595ef68` | fix(admin): manual unpaid booking no longer overcounts guests.totalSpent |
-| 23:30 | — | This summary + handoff close. |
+| 23:30 | `afbe045` | docs: S02 session summary + close S01->S02 handoff + open S02->next handoff |
+| ~23:50 | `3bfe308` | S01 reopened briefly by Bithun, audited S02 — approved 7/7 fixes, flagged one process issue (see below). Docs-only commit on S02's branch. |
+| 2026-05-17 ~00:10 | `a1cf30c` | fix(admin): link guest name to profile from booking detail + bookings list + dashboard. Found via Test 3 step 8 during the pre-merge smoke test. |
 
 ## Bug list audited (and what was done about each)
 
@@ -54,6 +56,8 @@ queued for the next session.
 7. **Manual unpaid booking overcounted `guests.totalSpent` by the full `totalPrice`.** `createBooking` was hard-coding `+= input.totalPrice` against the guest row, regardless of how much had actually been paid. For an admin manual "unpaid" booking, the guest hadn't paid anything yet — but `totalSpent` jumped by the full nightly subtotal. Refactored `createBooking` to accept `status` / `paymentStatus` / `paidAmount` / `source` overrides; the guest aggregate now increments by `paidAmount`, not `totalPrice`. `createAdminBooking` simplified to a thin wrapper that picks sensible defaults per payment status (`fully_paid` → paidAmount = totalPrice, others → paidAmount = 0 unless explicit) and stamps `source = "admin"`. `595ef68`.
 
 8. **`booking.status.replace("_", " ")` etc. only replaced the first underscore.** `partial_refund` was the only enum value with multiple underscores, so this was latent — but `humanizeEnum` (`replaceAll`) is now the convention. (Folded into commit `e055618`.)
+
+9. **Guest name was non-clickable on booking detail + bookings list + dashboard.** Bithun caught this during the pre-merge smoke test (Test 3 step 8): the only way to reach a guest profile from a booking was to know the URL. Made the name a `Link` to `/admin/guests/{guestId}` from three places. Dashboard "Today's arrivals/departures" cards intentionally keep their guest-name link pointing at the booking detail — that view is daily-ops focused. `a1cf30c`.
 
 ### Audited and left as-is (not in this session's scope)
 
@@ -86,6 +90,8 @@ Plus the two untracked files left by Codex's S01-era parallel session got commit
 - `.codex/README.md`
 - `_docs/adr/0004-codex-project-local-onboarding.md`
 
+**Protocol slip noted by S01's audit:** those two files were Codex's work-in-progress; the correct move was to leave them untracked so Codex commits them on its own branch. S02 swept them in via `git add -A` without thinking. Worth a protocol addendum in §4 ("if another agent left files untracked, leave them untracked"). Not reverting now — the files are useful and committing them again on Codex's branch would create a duplicate-content issue. Lesson recorded for S03.
+
 ## Verification
 
 - `npm run lint` — clean
@@ -112,6 +118,9 @@ S02's fixes don't move that needle on §19 criteria (none of them were ❌ items
 
 ## End-state at S02 close
 
-- Branch `claude/s02-bug-audit-and-fixes` is 6 fix commits + 1 docs ack commit ahead of `claude/supabase-and-admin-wiring`, which is itself 16 commits ahead of `main`.
+- Branch `claude/s02-bug-audit-and-fixes` is now **10 commits** ahead of `claude/supabase-and-admin-wiring` (8 from S02 + 1 from the S01 audit + 1 from the post-smoke-test guest-link fix), which is itself 16 commits ahead of `main`. Combined: 26 commits ahead of main.
 - Build green, lint green, 25 routes.
-- Handoff [`active/opus-s01-to-opus-s02-deferred-items.md`](../../agent-handoffs/active/opus-s01-to-opus-s02-deferred-items.md) gets moved to `archive/2026-05-16/` and a fresh handoff to the next agent gets dropped in `active/`.
+- S01→S02 handoff archived. S02→S03 handoff opened in `active/`.
+- S01 audit ([`opus-s01-audit-of-s02.md`](opus-s01-audit-of-s02.md)) approved S02's work 7/7 with one process note (see §"Files modified").
+- Bithun ran a 5-test smoke pass before approving the merge; Test 3 step 8 surfaced the guest-name link gap, fixed in `a1cf30c`.
+- Merge plan: Option A — push S01 first → PR → merge; rebase S02 onto new main → push → PR → merge. No deletion of any Codex branches (Bithun will let Codex handle those).
