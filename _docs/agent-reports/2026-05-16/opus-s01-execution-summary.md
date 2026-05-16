@@ -518,3 +518,76 @@ a133bf3  feat: add supabase schema and admin auth foundation  (this branch's fir
 ```
 
 Build green, lint green, 25 routes, all changes on `codex/supabase-foundation`. Ready for browser smoke-test.
+
+## Entry 5 — 2026-05-16, 20:28 – 21:32 CEST — Branch rename, protocol scaffolding, ADRs, S01 closeout
+
+After Entry 4's commit, Bithun raised three meta-level concerns that triggered a process-track slice (no application code touched). All work in this entry is `_docs/` and `.claude/` only — pure architecture/coordination, no runtime impact.
+
+### Commit timeline
+
+| Time (CEST) | Commit | Description |
+|---|---|---|
+| ~20:30 | — | Bithun: timestamps in S01 summary are relative offsets — please backfill absolute clock times so chronology is readable. Extract timestamps from `git log` and rewrite Entry 1–4 headers with `HH:MM CEST` ranges + per-commit tables. |
+| 20:37:07 | `ab26f4a` | `docs: backfill absolute CEST timestamps into S01 summary entries` |
+| ~20:40 | — | Bithun: my commits have been on `codex/supabase-foundation` but convention should be `claude/` for Claude work. Verified zero pushes had happened; local rename only. Renamed `codex/supabase-foundation` → `claude/supabase-and-admin-wiring`; recreated `codex/supabase-foundation` at `a133bf3` to match origin; reset upstream tracking. |
+| ~20:45 | — | Bithun: design the system that prevents multi-agent collisions. Proposed branch hygiene + session summaries + handoffs convention. Drafted `_docs/AGENT-PROTOCOL.md`. |
+| 20:51:22 | `44fc658` | `docs: add agent protocol + handoff structure for multi-agent coordination` (initial cut — flat filenames with date prefix, `to:` recipient in frontmatter, status lifecycle) |
+| ~21:00 | — | Bithun: filenames are too long with date prefix; we'll work over multiple days; let's use date folders. Also split handoffs by lifecycle (open vs done) so the active workload is at-a-glance. Also: agents should self-manage context budget proactively. |
+| 21:20:14 | `f5efa49` | `docs: restructure agent reports into date folders + handoffs into active/archive + add context-budget self-management` (10 files moved via `git mv` to preserve history; protocol §5 added with 🟢🟡🟠🔴 buckets per agent window size; CLAUDE.md + memory updated) |
+| ~21:25 | — | Bithun: architecture decisions should live in their own category — not mixed into per-session execution logs. Adopted ADR (Architecture Decision Record) pattern at `_docs/adr/`. Wrote retroactive ADRs 0001–0003 capturing the decisions made in this entry. Created `.claude/README.md` as the documented home for Claude-specific project-local config; `.gitignore` ignores everything under `.claude/` and `.codex/` except their READMEs. |
+| 21:31:57 | `2acf7f1` | `docs: add ADRs for protocol decisions + .claude/ project-local folder convention` |
+| ~21:35 | — | Bithun spawned a Codex session using the bootstrap prompt drafted at the end of Entry 4. Codex independently wrote `_docs/adr/0004-codex-project-local-onboarding.md` and `.codex/README.md` — exact mirror of Claude's setup. **First validation that the protocol works for an agent we haven't directly coordinated with.** |
+| ~21:40 | — | Bithun: my context is approaching Yellow/Orange. Per ADR 0003, the right move is to write a closing entry and prepare a clean handoff to S02. This is that entry. |
+
+### What this session DIDN'T do
+
+This entry deliberately did not touch the six deferred items in [`_docs/agent-handoffs/active/opus-s01-to-next-agent-deferred-items.md`](../../agent-handoffs/active/opus-s01-to-next-agent-deferred-items.md). Those remain open. The handoff is still valid as-is for whoever picks up next — Opus S02 or Codex.
+
+### Acknowledgments
+
+- ADR 0004 was written by Codex following ADR 0001's protocol on their own without me reviewing first. The fact that Codex independently produced an ADR that's consistent in tone, format, and conventions is the strongest possible evidence that this scaffolding works.
+
+### Branch state at end of S01
+
+```
+2acf7f1  docs: add ADRs for protocol decisions + .claude/ project-local folder convention
+f5efa49  docs: restructure agent reports into date folders + handoffs into active/archive + add context-budget self-management
+44fc658  docs: add agent protocol + handoff structure for multi-agent coordination
+ab26f4a  docs: backfill absolute CEST timestamps into S01 summary entries
+e823bc2  docs: append Entry 4 to S01 summary (admin write paths slice)
+101cd89  feat: wire admin write paths (filters, manual booking, detail, cleaning cycling, pricing preview, guest profile, settings, reports)
+e23269b  feat: add invoice viewer page with print support and list action icons
+3bc0c73  feat: add date navigation to admin calendar
+f196f4f  docs: append Entry 2 to S01 summary (Drizzle wiring slice)
+bc34daa  feat: route all pages and APIs through Drizzle queries
+cac7264  fix: use native HTML5 date picker on booking page
+ae598b4  docs: add Opus S01 execution summary (append-only session log)
+dc4111c  feat: wire Supabase migration, seed, admin user, password sign-in
+c6aa18b  docs: add Opus S01 pending-work audit and Supabase activation plan
+a133bf3  feat: add supabase schema and admin auth foundation (Codex baseline)
+```
+
+15 commits ahead of `main` on `claude/supabase-and-admin-wiring` — pending: this commit will be commit 16.
+
+### S01 final statistics
+
+- **Active time:** 2026-05-16, 16:30 – 21:32 CEST (~5 hours)
+- **Commits:** 16 (15 listed above plus this docs commit)
+- **Files changed:** ~75 application files + 17 docs/protocol files
+- **Acceptance criteria movement:** 6 ✅ → 12 ✅ (from session start). Five remaining hard fails are all provider-key-dependent or scope-blocked.
+- **Build + lint state:** green throughout. 25 routes. Proxy registered.
+- **Open handoff:** [`active/opus-s01-to-next-agent-deferred-items.md`](../../agent-handoffs/active/opus-s01-to-next-agent-deferred-items.md) — six items, priority ordered, status `open`, ready for S02 to pick up.
+
+### S01 closes here. S02 picks up via the handoff.
+
+S02 is expected to:
+1. Read `_docs/AGENT-PROTOCOL.md` and ADRs 0001–0003 (Codex's 0004 is informational)
+2. Read this summary (Entries 1–5) to understand state
+3. Read the open handoff in `active/`
+4. Pick one slice (recommended: Stripe Checkout — Item 1 — if Stripe test keys are available)
+5. Update the handoff's `status: open` → `acknowledged`, add `date_acknowledged:`
+6. Branch as `claude/<topic>` from `main` (after the PR for `claude/supabase-and-admin-wiring` merges)
+7. Work, commit, write their own session summary in `_docs/agent-reports/<today>/opus-s02-<title>.md`
+8. When done: move the handoff from `active/` to `archive/<today>/`, set `status: completed`
+
+The protocol holds. Next session demonstrates it again.
