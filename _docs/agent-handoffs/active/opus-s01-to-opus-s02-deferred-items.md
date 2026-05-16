@@ -1,23 +1,41 @@
 ---
 from: opus (S01)
-to: next-agent
+to: opus-s02
 date: 2026-05-16T20:50:00+02:00
-topic: Deferred items after Supabase wiring + admin write paths
+topic: Kickoff + deferred items after Supabase wiring + admin write paths
 status: open
 branch_at_handoff: claude/supabase-and-admin-wiring
 read_first:
   - _docs/AGENT-PROTOCOL.md
+  - _docs/adr/0001-multi-agent-coordination-protocol.md
+  - _docs/adr/0002-folder-structure-for-reports-and-handoffs.md
+  - _docs/adr/0003-context-budget-self-management.md
   - _docs/agent-reports/2026-05-16/opus-s01-execution-summary.md
   - _docs/agent-reports/2026-05-16/opus-s01-pending-audit.md
 ---
 
-# Handoff — deferred items after Opus S01
+# Kickoff + deferred items — Opus S01 → Opus S02
 
-## Context
+## How to use this file
 
-Session S01 (Opus 4.7, 2026-05-16 16:30–20:28 CEST) completed the Supabase activation, the Drizzle persistence layer, the calendar nav + invoice viewer, and the admin write paths. Full details in `_docs/agent-reports/2026-05-16/opus-s01-execution-summary.md`. Branch `claude/supabase-and-admin-wiring` carries 11 commits ahead of `main` and is ready to PR.
+You are Opus session **S02**. This handoff is your full kickoff brief. The user pointed you here with a one-liner; everything you need is below.
 
-Twelve of nineteen prompt acceptance criteria are now fully met. The five remaining hard fails and two partials are all either provider-key-dependent or pure scope-blocked — none are gated by something Opus S01 could have done alone.
+When you start: update this file's `status: open` → `status: acknowledged` and add a `date_acknowledged:` field in the YAML frontmatter. When you finish (or stop and pass along to S03): set `status: completed`, add `date_completed:` + `final_commit:`, and **move this file** from `active/` to `archive/<today>/` per the protocol. If items remain, write a follow-up handoff (`opus-s02-to-opus-s03-*.md` or `opus-s02-to-next-agent-*.md`).
+
+## Bootstrap checklist (do these in order)
+
+1. **Read the docs listed in `read_first:` above.** Protocol + ADRs first (~10 minutes), then S01 summary (~10 minutes). Don't skip — you will absolutely redo something S01 already shipped if you do.
+2. **Verify your branch.** Run `git branch --show-current`. You should be on `claude/<your-topic>` once you start work — **never** commit on a `codex/*` branch even if you accidentally land on one. (S01 made this mistake near the end and had to fix it via `git branch -f`. You can avoid it entirely by always running the check before committing.)
+3. **Confirm where `main` is.** If S01's PR (`claude/supabase-and-admin-wiring`) is merged: branch your new work off `main`. If not yet merged: branch off `claude/supabase-and-admin-wiring` directly so you build on top of S01's work.
+4. **Update this handoff's `status:` to `acknowledged`.** Commit that small update separately so the history is clean.
+
+## Context (state of the repo)
+
+Session S01 (Opus 4.7, 2026-05-16 16:30–21:35 CEST) completed the Supabase activation, the Drizzle persistence layer, the calendar nav + invoice viewer, the admin write paths, and the multi-agent coordination scaffolding (AGENT-PROTOCOL.md + ADRs 0001–0003 + folder restructure + `.claude/`/`.codex/` conventions). Codex independently added ADR 0004 documenting their parallel `.codex/` setup. Full session details: `_docs/agent-reports/2026-05-16/opus-s01-execution-summary.md` (5 entries).
+
+Twelve of nineteen prompt acceptance criteria are now fully met. The five remaining hard fails and two partials are all either provider-key-dependent or scope-blocked — none are gated by something S01 could have done alone.
+
+`claude/supabase-and-admin-wiring` carries 16 commits ahead of `main` and is ready to PR.
 
 ## Goal
 

@@ -219,15 +219,36 @@ When they finish a handoff, they MOVE its file from `active/` to `archive/<today
 
 ## 8. Telling agents to follow this protocol
 
-When the human spawns a new agent session in this repo, the kickoff prompt should include:
+When the human spawns a new agent session in this repo, the kickoff prompt should be **one line** pointing at the handoff file on disk. See §9 below — chat is ephemeral, dispatch lives on disk.
 
-> Read `_docs/AGENT-PROTOCOL.md` first. Then look at `_docs/agent-handoffs/active/` for any handoff addressed to you or `to-next-agent`. Then read the latest entry in `_docs/agent-reports/<latest-date>/`. Follow the protocol throughout your session — branch naming, session summary, handoffs, context-budget self-management.
+Example one-liner the human pastes when spawning a new agent:
+
+> Read `_docs/agent-handoffs/active/<latest-handoff-for-you>.md` and follow it.
+
+The handoff itself contains protocol + ADR pointers, the bootstrap checklist, and the work items. No copy-paste of long instructions in chat.
 
 If the agent uses persistent memory (Claude does, via `~/.claude/memory/`), it should remember this convention for future sessions on the same repo.
 
 ---
 
-## 9. Why this exists
+## 9. Chat is ephemeral — dispatch lives on disk
+
+See [ADR 0005](adr/0005-dispatch-prompts-on-disk.md) for the full rationale.
+
+**Rule:** any agent-to-human or agent-to-agent message longer than **two lines** must be saved to disk, not pasted in chat. The chat reply gives a one-line pointer at most: *"Saved to `<path>`."*
+
+This applies to:
+- **Kickoff / dispatch prompts** for a future session → write a handoff in `agent-handoffs/active/`, give the human the one-line pointer.
+- **Long status summaries** → session-summary entries in `agent-reports/<date>/`, not chat content.
+- **Decision rationale** spanning multiple paragraphs → ADR in `adr/`, not chat content.
+
+The chat reply can still summarise what was just saved (one short paragraph), but the authoritative content lives in the file.
+
+**Why this rule exists:** Bithun copy-pastes between Claude Code and Codex CLI, often on different machines or windows. Long chat blocks get truncated, line-wrapped, or otherwise corrupted in transfer. On-disk files don't have that risk.
+
+---
+
+## 10. Why all this exists
 
 Single-agent work doesn't need this. Multi-agent work without this gets expensive fast:
 
