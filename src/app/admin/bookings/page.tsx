@@ -5,7 +5,13 @@ import { Button } from "@/components/ui/button";
 import { TextInput } from "@/components/ui/field";
 import { getActiveRoomTypes, getPropertyBySlug, listBookings } from "@/lib/db/queries";
 import { env } from "@/lib/env";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import {
+  bookingStatusTone,
+  formatCurrency,
+  formatDate,
+  humanizeEnum,
+  paymentStatusTone,
+} from "@/lib/utils";
 
 const STATUS_OPTIONS = ["pending", "confirmed", "checked_in", "checked_out", "cancelled", "no_show"];
 const PAYMENT_OPTIONS = ["unpaid", "deposit_paid", "fully_paid", "refunded", "partial_refund"];
@@ -77,7 +83,7 @@ export default async function AdminBookingsPage({
         >
           <option value="">All statuses</option>
           {STATUS_OPTIONS.map((s) => (
-            <option key={s} value={s}>{s.replace("_", " ")}</option>
+            <option key={s} value={s}>{humanizeEnum(s)}</option>
           ))}
         </select>
         <select
@@ -99,7 +105,7 @@ export default async function AdminBookingsPage({
         >
           <option value="">All payment states</option>
           {PAYMENT_OPTIONS.map((p) => (
-            <option key={p} value={p}>{p.replace("_", " ")}</option>
+            <option key={p} value={p}>{humanizeEnum(p)}</option>
           ))}
         </select>
         <div className="flex items-center gap-2">
@@ -145,10 +151,10 @@ export default async function AdminBookingsPage({
                   <td className="px-4 py-3">{booking.roomLabel}</td>
                   <td className="px-4 py-3">{formatDate(booking.checkIn)} - {formatDate(booking.checkOut)}</td>
                   <td className="px-4 py-3">
-                    <Badge tone={statusTone(booking.status)}>{booking.status.replace("_", " ")}</Badge>
+                    <Badge tone={bookingStatusTone(booking.status)}>{humanizeEnum(booking.status)}</Badge>
                   </td>
                   <td className="px-4 py-3">
-                    <Badge tone={paymentTone(booking.paymentStatus)}>{booking.paymentStatus.replace("_", " ")}</Badge>
+                    <Badge tone={paymentStatusTone(booking.paymentStatus)}>{humanizeEnum(booking.paymentStatus)}</Badge>
                   </td>
                   <td className="px-4 py-3 text-right font-semibold tabular-nums">
                     {formatCurrency(booking.totalPrice, booking.currency)}
@@ -163,25 +169,3 @@ export default async function AdminBookingsPage({
   );
 }
 
-function statusTone(status: string) {
-  switch (status) {
-    case "confirmed": return "teal" as const;
-    case "checked_in": return "green" as const;
-    case "checked_out": return "slate" as const;
-    case "pending": return "amber" as const;
-    case "cancelled": return "rose" as const;
-    case "no_show": return "rose" as const;
-    default: return "slate" as const;
-  }
-}
-
-function paymentTone(status: string) {
-  switch (status) {
-    case "fully_paid": return "green" as const;
-    case "deposit_paid": return "teal" as const;
-    case "refunded": return "amber" as const;
-    case "partial_refund": return "amber" as const;
-    case "unpaid": return "rose" as const;
-    default: return "slate" as const;
-  }
-}

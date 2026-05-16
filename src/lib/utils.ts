@@ -51,3 +51,43 @@ export function nightsBetween(checkIn: string, checkOut: string) {
   const end = parseISO(checkOut);
   return Math.max(0, Math.round((end.getTime() - start.getTime()) / 86400000));
 }
+
+export function humanizeEnum(value: string) {
+  return value.replaceAll("_", " ");
+}
+
+export type BadgeTone = "teal" | "green" | "amber" | "rose" | "slate";
+
+export function bookingStatusTone(status: string): BadgeTone {
+  switch (status) {
+    case "confirmed":
+      return "teal";
+    case "checked_in":
+      return "green";
+    case "checked_out":
+      return "slate";
+    case "pending":
+      return "amber";
+    case "cancelled":
+    case "no_show":
+      return "rose";
+    default:
+      return "slate";
+  }
+}
+
+export function paymentStatusTone(status: string): BadgeTone {
+  switch (status) {
+    case "fully_paid":
+      return "green";
+    case "deposit_paid":
+      return "teal";
+    case "refunded":
+    case "partial_refund":
+      return "amber";
+    case "unpaid":
+      return "rose";
+    default:
+      return "slate";
+  }
+}

@@ -4,7 +4,7 @@ import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { formatDate } from "@/lib/utils";
+import { formatDate, humanizeEnum } from "@/lib/utils";
 import type { AdminCleaningRow } from "@/lib/db/queries";
 
 const CYCLE: Record<string, "pending" | "in_progress" | "completed"> = {
@@ -58,7 +58,7 @@ export function CleaningRow({ task }: { task: AdminCleaningRow }) {
       </div>
       <div className="flex items-center gap-2">
         {loading ? <Loader2 className="h-4 w-4 animate-spin text-slate-400" /> : null}
-        <Badge tone={tone(status)}>{status.replace("_", " ")}</Badge>
+        <Badge tone={tone(status)}>{humanizeEnum(status)}</Badge>
         <span className="text-xs text-slate-400">tap to cycle →</span>
       </div>
     </button>

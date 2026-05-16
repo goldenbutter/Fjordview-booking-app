@@ -1,6 +1,13 @@
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import type { AdminBookingRow, AdminCleaningRow } from "@/lib/db/queries";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import {
+  bookingStatusTone,
+  formatCurrency,
+  formatDate,
+  humanizeEnum,
+  paymentStatusTone,
+} from "@/lib/utils";
 import type { Booking, Room, RoomType } from "@/types";
 
 export function StatCard({ label, value, detail }: { label: string; value: string; detail: string }) {
@@ -29,17 +36,33 @@ export function BookingTable({ bookings }: { bookings: AdminBookingRow[] }) {
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100">
-          {bookings.map((booking) => (
-            <tr key={booking.id}>
-              <td className="px-4 py-3 font-semibold text-teal-700">{booking.bookingRef}</td>
-              <td className="px-4 py-3">{booking.guestName}</td>
-              <td className="px-4 py-3">{booking.roomLabel}</td>
-              <td className="px-4 py-3">{formatDate(booking.checkIn)} - {formatDate(booking.checkOut)}</td>
-              <td className="px-4 py-3"><Badge tone={booking.status === "confirmed" ? "teal" : "amber"}>{booking.status}</Badge></td>
-              <td className="px-4 py-3"><Badge tone={booking.paymentStatus === "fully_paid" ? "green" : "amber"}>{booking.paymentStatus}</Badge></td>
-              <td className="px-4 py-3 text-right font-semibold">{formatCurrency(booking.totalPrice)}</td>
+          {bookings.length === 0 ? (
+            <tr>
+              <td colSpan={7} className="px-4 py-6 text-center text-slate-500">
+                No bookings yet.
+              </td>
             </tr>
-          ))}
+          ) : (
+            bookings.map((booking) => (
+              <tr key={booking.id} className="hover:bg-slate-50">
+                <td className="px-4 py-3 font-semibold text-teal-700">
+                  <Link href={`/admin/bookings/${booking.id}`} className="hover:underline">
+                    {booking.bookingRef}
+                  </Link>
+                </td>
+                <td className="px-4 py-3">{booking.guestName}</td>
+                <td className="px-4 py-3">{booking.roomLabel}</td>
+                <td className="px-4 py-3">{formatDate(booking.checkIn)} - {formatDate(booking.checkOut)}</td>
+                <td className="px-4 py-3">
+                  <Badge tone={bookingStatusTone(booking.status)}>{humanizeEnum(booking.status)}</Badge>
+                </td>
+                <td className="px-4 py-3">
+                  <Badge tone={paymentStatusTone(booking.paymentStatus)}>{humanizeEnum(booking.paymentStatus)}</Badge>
+                </td>
+                <td className="px-4 py-3 text-right font-semibold tabular-nums">{formatCurrency(booking.totalPrice, booking.currency)}</td>
+              </tr>
+            ))
+          )}
         </tbody>
       </table>
     </div>
@@ -75,7 +98,7 @@ export function CleaningList({ tasks }: { tasks: AdminCleaningRow[] }) {
             <div className="font-semibold text-slate-950">Room {task.roomLabel}</div>
             <div className="text-sm text-slate-500">{formatDate(task.taskDate)} · Assigned to {task.assignedTo ?? "Unassigned"}</div>
           </div>
-          <Badge tone={task.status === "completed" ? "green" : "amber"}>{task.status.replace("_", " ")}</Badge>
+          <Badge tone={task.status === "completed" ? "green" : task.status === "in_progress" ? "teal" : "amber"}>{humanizeEnum(task.status)}</Badge>
         </div>
       ))}
     </div>

@@ -3,7 +3,14 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, FileText, Mail, Phone, Receipt } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { getBookingDetail } from "@/lib/db/queries";
-import { formatCurrency, formatDate, nightsBetween } from "@/lib/utils";
+import {
+  bookingStatusTone,
+  formatCurrency,
+  formatDate,
+  humanizeEnum,
+  nightsBetween,
+  paymentStatusTone,
+} from "@/lib/utils";
 import { CancelBookingButton } from "./cancel-button";
 
 export default async function BookingDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -29,8 +36,8 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Badge tone={statusTone(booking.status)}>{booking.status.replace("_", " ")}</Badge>
-          <Badge tone={paymentTone(booking.paymentStatus)}>{booking.paymentStatus.replace("_", " ")}</Badge>
+          <Badge tone={bookingStatusTone(booking.status)}>{humanizeEnum(booking.status)}</Badge>
+          <Badge tone={paymentStatusTone(booking.paymentStatus)}>{humanizeEnum(booking.paymentStatus)}</Badge>
           <Badge tone="slate">source: {booking.source}</Badge>
         </div>
       </header>
@@ -110,25 +117,3 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-function statusTone(status: string) {
-  switch (status) {
-    case "confirmed": return "teal" as const;
-    case "checked_in": return "green" as const;
-    case "checked_out": return "slate" as const;
-    case "pending": return "amber" as const;
-    case "cancelled": return "rose" as const;
-    case "no_show": return "rose" as const;
-    default: return "slate" as const;
-  }
-}
-
-function paymentTone(status: string) {
-  switch (status) {
-    case "fully_paid": return "green" as const;
-    case "deposit_paid": return "teal" as const;
-    case "refunded": return "amber" as const;
-    case "partial_refund": return "amber" as const;
-    case "unpaid": return "rose" as const;
-    default: return "slate" as const;
-  }
-}
