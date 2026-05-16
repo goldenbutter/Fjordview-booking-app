@@ -5,7 +5,7 @@ import { ArrowLeft, FileJson } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { getDb } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
-import { getBookingByRef } from "@/lib/db/queries";
+import { getBookingDetail } from "@/lib/db/queries";
 import { calculateStayPrice } from "@/lib/pricing";
 import { formatCurrency, formatDate, humanizeEnum, nightsBetween } from "@/lib/utils";
 import { PrintButton } from "./print-button";
@@ -20,19 +20,11 @@ export default async function InvoiceDetailPage({
 }) {
   const { bookingId } = await params;
 
-  const db = getDb();
-  const byId = await db
-    .select({ ref: schema.bookings.bookingRef })
-    .from(schema.bookings)
-    .where(eq(schema.bookings.id, bookingId))
-    .limit(1);
-  const ref = byId[0]?.ref ?? bookingId;
-
-  const data = await getBookingByRef(ref);
+  const data = await getBookingDetail(bookingId);
   if (!data) notFound();
   const { property, booking, guest, roomType, room } = data;
 
-  // Fetch pricing rules to compute per-night breakdown
+  const db = getDb();
   const pricingRuleRows = await db
     .select()
     .from(schema.pricingRules)

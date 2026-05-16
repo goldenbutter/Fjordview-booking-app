@@ -6,6 +6,7 @@ import {
   getAvailableRoomTypes as getAvailableRoomTypesPure,
 } from "@/lib/availability";
 import { createBookingRef } from "@/lib/booking-ref";
+import { isUuid } from "@/lib/api-validation";
 import type {
   Booking,
   CancellationPolicy,
@@ -718,11 +719,20 @@ export async function listBookings(propertyId: string, filters: BookingsListFilt
 
 // ---- Booking detail (admin) ----
 
-export async function getBookingDetail(bookingId: string) {
-  const db = getDb();
-  const bookingRows = await db.select().from(schema.bookings).where(eq(schema.bookings.id, bookingId)).limit(1);
-  if (bookingRows.length === 0) return null;
-  return getBookingByRef(bookingRows[0].bookingRef);
+// Accepts either a booking UUID or a booking ref (e.g. "FV-2026-0001").
+// Returns null for malformed IDs rather than letting Postgres raise.
+export async function getBookingDetail(idOrRef: string) {
+  if (isUuid(idOrRef)) {
+    const db = getDb();
+    const bookingRows = await db
+      .select()
+      .from(schema.bookings)
+      .where(eq(schema.bookings.id, idOrRef))
+      .limit(1);
+    if (bookingRows.length === 0) return null;
+    return getBookingByRef(bookingRows[0].bookingRef);
+  }
+  return getBookingByRef(idOrRef);
 }
 
 // ---- Admin booking create (manual / walk-in) ----
