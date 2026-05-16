@@ -219,12 +219,12 @@ ALTER TABLE "room_types" ENABLE ROW LEVEL SECURITY;
 --> statement-breakpoint
 ALTER TABLE "rooms" ENABLE ROW LEVEL SECURITY;
 --> statement-breakpoint
-CREATE OR REPLACE FUNCTION auth.property_id()
+CREATE OR REPLACE FUNCTION public.current_property_id()
 RETURNS uuid
 LANGUAGE sql
 SECURITY DEFINER
 STABLE
-SET search_path = public, auth
+SET search_path = public, auth, pg_temp
 AS $$
   SELECT property_id
   FROM public.admin_users
@@ -233,72 +233,74 @@ AS $$
   LIMIT 1
 $$;
 --> statement-breakpoint
+GRANT EXECUTE ON FUNCTION public.current_property_id() TO authenticated, anon;
+--> statement-breakpoint
 CREATE POLICY "Admins manage own property"
   ON "properties"
   FOR ALL
   TO authenticated
-  USING ("id" = auth.property_id())
-  WITH CHECK ("id" = auth.property_id());
+  USING ("id" = public.current_property_id())
+  WITH CHECK ("id" = public.current_property_id());
 --> statement-breakpoint
 CREATE POLICY "Admins manage own property room types"
   ON "room_types"
   FOR ALL
   TO authenticated
-  USING ("property_id" = auth.property_id())
-  WITH CHECK ("property_id" = auth.property_id());
+  USING ("property_id" = public.current_property_id())
+  WITH CHECK ("property_id" = public.current_property_id());
 --> statement-breakpoint
 CREATE POLICY "Admins manage own property rooms"
   ON "rooms"
   FOR ALL
   TO authenticated
-  USING ("property_id" = auth.property_id())
-  WITH CHECK ("property_id" = auth.property_id());
+  USING ("property_id" = public.current_property_id())
+  WITH CHECK ("property_id" = public.current_property_id());
 --> statement-breakpoint
 CREATE POLICY "Admins manage own property pricing rules"
   ON "pricing_rules"
   FOR ALL
   TO authenticated
-  USING ("property_id" = auth.property_id())
-  WITH CHECK ("property_id" = auth.property_id());
+  USING ("property_id" = public.current_property_id())
+  WITH CHECK ("property_id" = public.current_property_id());
 --> statement-breakpoint
 CREATE POLICY "Admins manage own property guests"
   ON "guests"
   FOR ALL
   TO authenticated
-  USING ("property_id" = auth.property_id())
-  WITH CHECK ("property_id" = auth.property_id());
+  USING ("property_id" = public.current_property_id())
+  WITH CHECK ("property_id" = public.current_property_id());
 --> statement-breakpoint
 CREATE POLICY "Admins manage own property bookings"
   ON "bookings"
   FOR ALL
   TO authenticated
-  USING ("property_id" = auth.property_id())
-  WITH CHECK ("property_id" = auth.property_id());
+  USING ("property_id" = public.current_property_id())
+  WITH CHECK ("property_id" = public.current_property_id());
 --> statement-breakpoint
 CREATE POLICY "Admins manage own property cancellation policies"
   ON "cancellation_policies"
   FOR ALL
   TO authenticated
-  USING ("property_id" = auth.property_id())
-  WITH CHECK ("property_id" = auth.property_id());
+  USING ("property_id" = public.current_property_id())
+  WITH CHECK ("property_id" = public.current_property_id());
 --> statement-breakpoint
 CREATE POLICY "Admins manage own property cleaning tasks"
   ON "cleaning_tasks"
   FOR ALL
   TO authenticated
-  USING ("property_id" = auth.property_id())
-  WITH CHECK ("property_id" = auth.property_id());
+  USING ("property_id" = public.current_property_id())
+  WITH CHECK ("property_id" = public.current_property_id());
 --> statement-breakpoint
 CREATE POLICY "Admins manage own property email log"
   ON "email_log"
   FOR ALL
   TO authenticated
-  USING ("property_id" = auth.property_id())
-  WITH CHECK ("property_id" = auth.property_id());
+  USING ("property_id" = public.current_property_id())
+  WITH CHECK ("property_id" = public.current_property_id());
 --> statement-breakpoint
 CREATE POLICY "Admins manage own property admin users"
   ON "admin_users"
   FOR ALL
   TO authenticated
-  USING ("property_id" = auth.property_id())
-  WITH CHECK ("property_id" = auth.property_id());
+  USING ("property_id" = public.current_property_id())
+  WITH CHECK ("property_id" = public.current_property_id());
