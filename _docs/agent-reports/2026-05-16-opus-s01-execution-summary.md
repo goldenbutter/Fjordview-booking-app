@@ -3,10 +3,34 @@
 > **Session:** S01
 > **Agent:** Opus 4.7
 > **Date:** 2026-05-16
+> **Active time:** ~16:30 – 20:28 CEST (~4 hours wall-clock; all timestamps Europe/Oslo, CEST = UTC+2)
 > **Branch:** `codex/supabase-foundation`
 > **Token budget:** 1 000 000 (per user-stated allocation)
 > **Mode:** Append-only — new work appended to the bottom log section. Do not overwrite earlier entries.
 > **Companion docs:** [2026-05-16-opus-s01-pending-audit.md](2026-05-16-opus-s01-pending-audit.md) (the analytical audit), this file (the execution record).
+
+## Session timeline at a glance
+
+| Time (CEST) | Commit | What happened |
+|---|---|---|
+| ~16:30 | — | Session starts. Codex's last commit `a133bf3` was at 16:25:34. Read prompt + reviews + agent reports + current code. |
+| ~16:45 – 17:55 | — | Help user create Supabase project + populate `.env.local` (Project URL, anon, service_role, pooled `DATABASE_URL`). Diagnose + fix `auth.property_id()` permission error → `public.current_property_id()`. Apply migration (60 SQL statements). Run seed script. Create admin auth user + `admin_users` row. Add password sign-in form. Fix HTML5 date picker on booking page. |
+| 17:59:49 | `c6aa18b` | docs: 38-item pending-work audit |
+| 17:59:58 | `dc4111c` | feat: Supabase migration, seed, admin user, password sign-in |
+| 18:27:01 | `cac7264` | fix: HTML5 date picker on booking page |
+| 18:27:09 | `ae598b4` | docs: create this execution summary (Entry 1) |
+| 18:27 – 18:58 | — | User notices public booking isn't visible in admin. Build full Drizzle query layer + refactor every route + page to use it. Smoke-test end-to-end with curl. |
+| 18:59:51 | `bc34daa` | feat: route all pages and APIs through Drizzle |
+| 19:00:52 | `f196f4f` | docs: Entry 2 |
+| ~19:05 – 19:46 | — | User reports calendar can't see June/July bookings; user reports invoice opens as raw JSON. Add calendar nav controls + invoice HTML page + print support + list action icons. |
+| 19:39:11 | `3bc0c73` | feat: calendar date navigation |
+| 19:45:51 | `e23269b` | feat: invoice viewer + print + list action icons |
+| ~19:50 – 20:25 | — | User flags Bookings page filters + Manual booking button non-functional. Cross-check entire prompt acceptance criteria. Build admin write paths slice: filters, manual booking form, booking detail + cancel, calendar status colors, cleaning cycling, pricing preview, guest search + profile, settings editor, real Recharts chart. |
+| 20:26:59 | `101cd89` | feat: admin write paths (22 files, +1521 lines) |
+| 20:28:02 | `e823bc2` | docs: Entry 4 |
+| 20:28+ | — | User requests timestamps be backfilled into this summary — this section + per-Entry tables added. |
+
+**End-state at 20:28:** 11 commits since the Codex baseline, build green, lint green, 25 routes registered. Twelve of nineteen prompt acceptance criteria fully met (up from six at session start). Five remaining gaps are all provider-key-dependent (Stripe / Resend) or scope-blocked (multi-tenant test, room CRUD).
 
 ---
 
@@ -178,11 +202,35 @@ Performed by S01 via scripts:
 
 > All subsequent work in this session is appended below as dated entries. Earlier entries above this line remain unchanged.
 
-## Entry 1 — 2026-05-16, T+session start to T+~3h
+## Entry 1 — 2026-05-16, 16:30 – 18:27 CEST — Audit, Supabase activation, login wiring, date picker
 
-(All work documented in §1 through §8 above. Concludes with the user requesting this summary be written before the next Drizzle-wiring slice begins.)
+All work documented in §1 through §8 above. Concludes with the user requesting this summary be written before the next Drizzle-wiring slice begins.
 
-## Entry 2 — 2026-05-16, T+~3h to T+~5h — Drizzle wiring slice complete
+**Commit timeline (all timestamps Europe/Oslo, CEST = UTC+2):**
+
+| Time (CEST) | Commit | Description |
+|---|---|---|
+| ~16:30 | — | Session opens. Codex's last commit `a133bf3` was at 16:25:34. Audit reading + Supabase project setup conversation with user begins. |
+| ~17:00 | — | User confirms `.env.local` is filled; I run `npx dotenv -e .env.local -- npx drizzle-kit migrate`. First attempt hangs on transaction pooler. Switch to custom `scripts/apply-migration.ts`. First run fails on `auth.property_id()` permission error. |
+| ~17:30 | — | Fix migration to use `public.current_property_id()`. Re-run cleanly: 60 statements, 10 tables, 7 indexes, 10 RLS policies, 1 helper function. |
+| ~17:45 | — | Run seed script → property `49fb2c8a-...` + 4 room types + 10 rooms + 3 pricing rules + 1 cancellation policy + 2 guests + 2 bookings + 1 cleaning task. Create admin auth user `bithun@ibithun.com` + admin_users row. |
+| 17:59:49 | `c6aa18b` | `docs: add Opus S01 pending-work audit and Supabase activation plan` (431 lines) |
+| 17:59:58 | `dc4111c` | `feat: wire Supabase migration, seed, admin user, password sign-in` (11 files: migration fix + 6 helper scripts + npm scripts + dotenv-cli devDep + password sign-in on login page) |
+| 18:27:01 | `cac7264` | `fix: use native HTML5 date picker on booking page` (user reported the calendar inputs were unusable) |
+| 18:27:09 | `ae598b4` | `docs: add Opus S01 execution summary (append-only session log)` (this file is created — Entry 1 content captured) |
+
+## Entry 2 — 2026-05-16, 18:27 – 19:01 CEST — Drizzle wiring slice complete
+
+**Commit timeline:**
+
+| Time (CEST) | Commit | Description |
+|---|---|---|
+| ~18:30 | — | User notices their booking on `/book/fjordview` doesn't appear in `/admin/bookings`. Explanation: routes still read from in-memory seed arrays. User approves the wiring slice. |
+| ~18:30–18:55 | — | Build `src/lib/db/queries.ts` (~430 lines), refactor `availability.ts` to pure functions, rewrite `admin-metrics.ts` as DB-backed, update `admin-cards.tsx` components for enriched rows, swap every API route + every page.tsx from seed reads to query helpers, drop localStorage from `booking-self-service.tsx`. |
+| ~18:58 | — | Smoke test via `curl`: POST a booking → `FV-2026-0003`, GET admin/bookings → returns all 3 refs, dashboard revenue jumped 4385 → 7622.50 kr. Persistence confirmed end-to-end. |
+| 18:59:51 | `bc34daa` | `feat: route all pages and APIs through Drizzle queries` (29 files, +1200 / -328) |
+| 19:00:52 | `f196f4f` | `docs: append Entry 2 to S01 summary (Drizzle wiring slice)` |
+
 
 User approved the next P0 slice: connect the public booking flow to the admin pages through real Postgres persistence. Goal: a booking created on `/book/fjordview` must immediately show in `/admin/bookings` without a page refresh, without localStorage, without seed-array reads.
 
@@ -266,7 +314,19 @@ Industrial-standard layered pattern. One commit (this entry) so the slice is ato
 ### Note on LOCAL_DEMO_MODE
 The flag is still `true` in `.env.local`. The behavior change in this slice: data is always real-DB regardless of the flag. To exercise the auth guard, flip to `false`, restart `npm run dev`, then hitting `/admin` will redirect to `/login` where `bithun@ibithun.com` / `admin1` signs in.
 
-## Entry 3 — 2026-05-16, T+~5h to T+~6h — Calendar navigation + Invoice viewer
+## Entry 3 — 2026-05-16, 19:01 – 19:46 CEST — Calendar navigation + Invoice viewer
+
+**Commit timeline:**
+
+| Time (CEST) | Commit | Description |
+|---|---|---|
+| ~19:05 | — | User screenshots the admin calendar showing only a 14-day window with no nav; June/July bookings invisible. Build URL-param navigation + Prev/Today/Next/Jump-to controls. |
+| 19:39:11 | `3bc0c73` | `feat: add date navigation to admin calendar` (2 files, +106 / -18) |
+| ~19:42 | — | User screenshots the invoice list showing "Open invoice JSON" producing raw JSON, not a printable invoice. Build `/admin/invoices/[bookingId]` HTML view with print button, MVA 12% breakdown, list-row action icons. |
+| 19:45:51 | `e23269b` | `feat: add invoice viewer page with print support and list action icons` (4 files, +282 / -20) |
+
+*Note: Entry 3's narrative was appended to this summary during the next session block (just before the admin write paths commit), so its docs change rode along inside commit `101cd89`.*
+
 
 Two user-reported gaps fixed in two focused commits.
 
@@ -307,7 +367,18 @@ After these commits, user asked for a comprehensive cross-check against the OPUS
 
 User authorized continuing with the tractable items (admin UI write paths that don't need Stripe/Resend keys). Defers: Stripe wiring, real email send, cron bodies, multi-tenant test, auth-aware admin scoping. Entry 4 will document the resulting work.
 
-## Entry 4 — 2026-05-16, T+~6h to T+~9h — Admin write paths slice
+## Entry 4 — 2026-05-16, 19:46 – 20:28 CEST — Admin write paths slice
+
+**Commit timeline:**
+
+| Time (CEST) | Commit | Description |
+|---|---|---|
+| ~19:50 | — | User flags Bookings page "Manual booking" button + Status/Room type/Payment filters all non-functional. Asks for a comprehensive cross-check of OPUS prompt §13 + §19 against current state. |
+| ~19:55 | — | Cross-check audit performed in chat. 12 of 19 acceptance criteria pass after Drizzle wiring; 7 partial/fail. User authorizes fixing everything that doesn't need Stripe/Resend keys. |
+| ~19:55–20:25 | — | Build: `listBookings` query helper with filter support, working filter dropdowns + URL search params, manual booking form + POST endpoint, booking detail page with cancel action, calendar status colors + clickable blocks + legend, cleaning tap-to-cycle PATCH endpoint, pricing interactive preview, guests search + profile page, settings editor with color pickers + PATCH endpoint, real Recharts revenue chart. Fix Recharts `Tooltip.formatter` type signature mid-build. |
+| 20:26:59 | `101cd89` | `feat: wire admin write paths (filters, manual booking, detail, cleaning cycling, pricing preview, guest profile, settings, reports)` (22 files, +1521 / -77). Also carries Entry 3's docs append along for the ride. |
+| 20:28:02 | `e823bc2` | `docs: append Entry 4 to S01 summary (admin write paths slice)` |
+
 
 User flagged that the Bookings page's "Manual booking" button and the Status/Room type/Payment filter inputs were all non-functional UI scaffolding. Re-audit revealed similar gaps across most admin pages. User authorized fixing everything that doesn't require external provider keys.
 
