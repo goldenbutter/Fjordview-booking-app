@@ -65,7 +65,12 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
 
         <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
           <h2 className="text-xl font-semibold text-slate-950">Guest</h2>
-          <p className="mt-4 text-base font-semibold text-slate-950">{guest.firstName} {guest.lastName}</p>
+          <Link
+            href={`/admin/guests/${guest.id}`}
+            className="mt-4 inline-block text-base font-semibold text-teal-700 hover:underline"
+          >
+            {guest.firstName} {guest.lastName}
+          </Link>
           <div className="mt-2 space-y-1 text-sm text-slate-600">
             <div className="flex items-center gap-2"><Mail className="h-4 w-4" /> {guest.email}</div>
             {guest.phone ? <div className="flex items-center gap-2"><Phone className="h-4 w-4" /> {guest.phone}</div> : null}

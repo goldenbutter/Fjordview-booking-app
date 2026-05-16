@@ -50,7 +50,11 @@ export function BookingTable({ bookings }: { bookings: AdminBookingRow[] }) {
                     {booking.bookingRef}
                   </Link>
                 </td>
-                <td className="px-4 py-3">{booking.guestName}</td>
+                <td className="px-4 py-3">
+                  <Link href={`/admin/guests/${booking.guestId}`} className="text-slate-900 hover:text-teal-700 hover:underline">
+                    {booking.guestName}
+                  </Link>
+                </td>
                 <td className="px-4 py-3">{booking.roomLabel}</td>
                 <td className="px-4 py-3">{formatDate(booking.checkIn)} - {formatDate(booking.checkOut)}</td>
                 <td className="px-4 py-3">
