@@ -1,0 +1,30 @@
+
+> fjordview-booking-app@0.1.0 dev
+> next dev --hostname 127.0.0.1 --port 3000
+
+▲ Next.js 16.2.6 (Turbopack)
+- Local:         http://127.0.0.1:3000
+- Network:       http://127.0.0.1:3000
+✓ Ready in 522ms
+
+ GET /book/fjordview 500 in 1014ms (next.js: 621ms, application-code: 393ms)
+▲ Next.js 16.2.6 (Turbopack)
+- Local:         http://127.0.0.1:3000
+- Network:       http://127.0.0.1:3000
+✓ Ready in 391ms
+
+ GET /book/fjordview 200 in 941ms (next.js: 628ms, application-code: 313ms)
+ GET /book/fjordview 200 in 92ms (next.js: 11ms, application-code: 80ms)
+ GET /api/properties/fjordview/availability?checkIn=2026-05-23&checkOut=2026-05-25 200 in 1171ms (next.js: 1143ms, application-code: 28ms)
+ GET /book/fjordview 200 in 142ms (next.js: 13ms, application-code: 129ms)
+ GET /api/properties/fjordview/availability?checkIn=2026-05-23&checkOut=2026-05-25 200 in 24ms (next.js: 15ms, application-code: 9ms)
+ POST /api/properties/fjordview/bookings 200 in 1301ms (next.js: 1284ms, application-code: 17ms)
+ GET /admin 200 in 1285ms (next.js: 849ms, application-code: 436ms)
+ GET /book/fjordview 200 in 116ms (next.js: 43ms, application-code: 73ms)
+ GET /api/properties/fjordview/availability?checkIn=2026-05-23&checkOut=2026-05-25 200 in 25ms (next.js: 16ms, application-code: 9ms)
+ GET /book/fjordview 200 in 270ms (next.js: 86ms, application-code: 184ms)
+ GET /api/properties/fjordview/availability?checkIn=2026-05-23&checkOut=2026-05-25 200 in 84ms (next.js: 71ms, application-code: 13ms)
+ POST /api/properties/fjordview/bookings 200 in 63ms (next.js: 56ms, application-code: 7ms)
+ GET /admin 200 in 144ms (next.js: 14ms, application-code: 130ms)
+ GET /book/fjordview 200 in 63ms (next.js: 8ms, application-code: 55ms)
+ GET /api/properties/fjordview/availability?checkIn=2026-05-23&checkOut=2026-05-25 200 in 17ms (next.js: 11ms, application-code: 6ms)

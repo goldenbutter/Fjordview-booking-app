@@ -119,11 +119,12 @@ export function BookingFlow({ property }: { property: Property }) {
           <div className="overflow-hidden rounded-lg border border-teal-100 bg-white shadow-sm">
             <div className="relative h-72">
               <Image
-                src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1600&q=80"
+                src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=1600&q=80"
                 alt="Fjordview Lodge"
                 fill
                 className="object-cover"
                 priority
+                unoptimized
               />
               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/75 to-transparent p-6 text-white">
                 <h2 className="max-w-xl text-4xl font-semibold tracking-tight">Book a quiet fjord stay</h2>
@@ -179,7 +180,14 @@ export function BookingFlow({ property }: { property: Property }) {
                   }`}
                 >
                   <div className="relative h-48 md:h-full">
-                    <Image src={room.photoUrls[0]} alt={room.name[language]} fill className="object-cover" />
+                    <Image
+                      src={room.photoUrls[0]}
+                      alt={room.name[language]}
+                      fill
+                      className="object-cover"
+                      loading="eager"
+                      unoptimized
+                    />
                   </div>
                   <div className="p-5">
                     <div className="flex flex-wrap items-start justify-between gap-3">

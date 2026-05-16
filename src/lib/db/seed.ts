@@ -259,12 +259,3 @@ export const demoCleaningTasks: CleaningTask[] = [
     assignedTo: "Maja",
   },
 ];
-
-if (require.main === module) {
-  console.log("Demo seed ready", {
-    property: demoProperty.slug,
-    roomTypes: demoRoomTypes.length,
-    rooms: demoRooms.length,
-    bookings: demoBookings.length,
-  });
-}
