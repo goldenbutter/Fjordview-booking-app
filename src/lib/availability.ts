@@ -58,5 +58,13 @@ export function autoAssignRoom(booking: Pick<Booking, "roomTypeId" | "checkIn" |
       ),
   );
 
-  return available[0] ?? null;
+  return available.sort((a, b) => lastRoomCheckout(a.id) - lastRoomCheckout(b.id))[0] ?? null;
+}
+
+function lastRoomCheckout(roomId: string) {
+  const checkouts = demoBookings
+    .filter((booking) => booking.roomId === roomId && !["cancelled", "no_show"].includes(booking.status))
+    .map((booking) => new Date(booking.checkOut).getTime());
+
+  return checkouts.length > 0 ? Math.max(...checkouts) : 0;
 }

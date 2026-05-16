@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { bookingGuestName, roomNumber, roomTypeName } from "@/lib/admin-metrics";
-import { demoBookings } from "@/lib/db/seed";
+import { demoBookings, demoProperty } from "@/lib/db/seed";
 
 function csvEscape(value: string | number | undefined) {
   const text = String(value ?? "");
@@ -31,7 +31,7 @@ export async function GET() {
   return new NextResponse(csv, {
     headers: {
       "content-type": "text/csv; charset=utf-8",
-      "content-disposition": "attachment; filename=fjordview-booking-report.csv",
+      "content-disposition": `attachment; filename=${demoProperty.slug}-booking-report.csv`,
     },
   });
 }

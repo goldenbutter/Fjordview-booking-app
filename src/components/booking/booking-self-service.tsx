@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FieldLabel, TextArea, TextInput } from "@/components/ui/field";
+import { demoBookingStorageKey } from "@/lib/demo-storage";
 import { demoBookings, demoGuests, demoRoomTypes } from "@/lib/db/seed";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import type { Property } from "@/types";
@@ -47,7 +48,7 @@ export function BookingSelfService({
 
   const bookingData = useMemo<StoredBooking | null>(() => {
     if (typeof window !== "undefined") {
-      const stored = JSON.parse(localStorage.getItem("fjordview-bookings") ?? "[]") as StoredBooking[];
+      const stored = JSON.parse(localStorage.getItem(demoBookingStorageKey(property.slug)) ?? "[]") as StoredBooking[];
       const match = stored.find((item) => item.booking.bookingRef === bookingRef);
       if (match) return match;
     }
@@ -57,7 +58,7 @@ export function BookingSelfService({
     const roomType = booking ? demoRoomTypes.find((item) => item.id === booking.roomTypeId) : undefined;
     if (!booking || !guest) return null;
     return { booking, guest, roomType };
-  }, [bookingRef]);
+  }, [bookingRef, property.slug]);
 
   const emailMatches = bookingData && email.toLowerCase() === bookingData.guest.email.toLowerCase();
 

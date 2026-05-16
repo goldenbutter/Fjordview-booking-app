@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FieldLabel, SelectInput, TextArea, TextInput } from "@/components/ui/field";
+import { demoBookingStorageKey } from "@/lib/demo-storage";
 import { defaultDateRange } from "@/lib/pricing";
 import { formatCurrency, formatDate, formatInputDate, nightsBetween, parseInputDate } from "@/lib/utils";
 import type { Locale, PriceBreakdown, Property, RoomType } from "@/types";
@@ -124,8 +125,9 @@ export function BookingFlow({ property }: { property: Property }) {
         throw new Error(typeof payload.error === "string" ? payload.error : "Could not create booking");
       }
       setCreated(payload);
-      const stored = JSON.parse(localStorage.getItem("fjordview-bookings") ?? "[]");
-      localStorage.setItem("fjordview-bookings", JSON.stringify([payload, ...stored]));
+      const storageKey = demoBookingStorageKey(property.slug);
+      const stored = JSON.parse(localStorage.getItem(storageKey) ?? "[]");
+      localStorage.setItem(storageKey, JSON.stringify([payload, ...stored]));
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not create booking");
     } finally {
@@ -158,7 +160,7 @@ export function BookingFlow({ property }: { property: Property }) {
               <div className="relative h-72">
                 <Image
                   src={property.heroImageUrl}
-                  alt="Fjordview Lodge"
+                  alt={property.name}
                   fill
                   className="object-cover"
                   priority
