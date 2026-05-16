@@ -181,3 +181,87 @@ Performed by S01 via scripts:
 ## Entry 1 — 2026-05-16, T+session start to T+~3h
 
 (All work documented in §1 through §8 above. Concludes with the user requesting this summary be written before the next Drizzle-wiring slice begins.)
+
+## Entry 2 — 2026-05-16, T+~3h to T+~5h — Drizzle wiring slice complete
+
+User approved the next P0 slice: connect the public booking flow to the admin pages through real Postgres persistence. Goal: a booking created on `/book/fjordview` must immediately show in `/admin/bookings` without a page refresh, without localStorage, without seed-array reads.
+
+### Approach chosen
+Industrial-standard layered pattern. One commit (this entry) so the slice is atomic:
+- `src/lib/db/queries.ts` — new typed query helpers, one per business operation. Routes/pages call helpers; helpers own the SQL.
+- Field-by-field DB-row-to-runtime-type mappers (`mapProperty`, `mapBooking`, etc.) so the existing `@/types` definitions don't change and downstream components are untouched.
+- Transactional booking creation with `pg_advisory_xact_lock(hashtext(property_id))` to serialize booking-ref generation and room assignment per property without blocking other properties.
+- Auto-assignment + availability math kept as pure functions in `src/lib/availability.ts` (refactored to accept data as parameters instead of reading seed globals).
+
+### What changed
+
+**New module:**
+- `src/lib/db/queries.ts` (~430 lines) with helpers:
+  - `getPropertyBySlug`, `getActiveRoomTypes`, `getAvailability`
+  - `createBooking` (transactional: advisory lock → upsert guest by `(property_id, email)` → MAX-suffix `bookingRef` generation → insert booking + cleaning_task with the auto-assigned room)
+  - `getBookingByRef` (with optional email gate), `cancelBooking` (deadline enforcement against the default `cancellation_policy`, refund calc, frees `room_id`, deletes the cleaning task)
+  - `getAdminSnapshotForProperty` / `getAdminSnapshotForSlug` returning enriched `AdminBookingRow[]` and `AdminCleaningRow[]` (so admin components don't need lookup helpers)
+  - `getCalendarData(propertyId, start, end)` returning rooms + overlapping bookings
+
+**Refactored to pure functions:**
+- `src/lib/availability.ts` — `getAvailableRoomTypes` and `autoAssignRoom` now take `roomTypes`, `rooms`, `bookings`, `pricingRules` as parameters. No more global seed reads.
+
+**Refactored to thin DB wrapper:**
+- `src/lib/admin-metrics.ts` — now a one-liner delegating to `getAdminSnapshotForSlug(env.defaultPropertySlug)`. Removed `bookingGuestName`, `roomNumber`, `roomTypeName` helpers (replaced by enriched fields on the snapshot rows).
+
+**Public API routes (all 5 now DB-backed):**
+- `GET /api/properties/[slug]/rooms`
+- `GET /api/properties/[slug]/availability`
+- `POST /api/properties/[slug]/bookings`
+- `GET /api/bookings/[ref]`
+- `POST /api/bookings/[ref]/cancel`
+
+**Admin API routes (all 5 now DB-backed):**
+- `GET /api/admin/dashboard`
+- `GET /api/admin/bookings`
+- `GET /api/admin/calendar`
+- `GET/POST /api/admin/invoices/[bookingId]`
+- `GET /api/admin/reports/export`
+
+**Pages (all 12 now async + DB-backed):**
+- Public: `(public)/book/[slug]/page.tsx`, `(public)/booking/[ref]/page.tsx`
+- Admin: `admin/layout.tsx`, `admin/page.tsx`, `admin/bookings/page.tsx`, `admin/calendar/page.tsx`, `admin/cleaning/page.tsx`, `admin/rooms/page.tsx`, `admin/pricing/page.tsx`, `admin/reports/page.tsx`, `admin/settings/page.tsx`, `admin/guests/page.tsx`, `admin/invoices/page.tsx`
+
+**Components:**
+- `src/components/admin/admin-cards.tsx` — `BookingTable`, `CleaningList`, `CalendarGrid` now consume `AdminBookingRow` / `AdminCleaningRow` (enriched with `guestName`, `roomLabel`, `roomTypeLabel`). `CalendarGrid` switched from hardcoded 7-day window to a 14-day rolling window starting today.
+- `src/components/booking/booking-self-service.tsx` — dropped localStorage entirely. Now fetches from `/api/bookings/[ref]?email=...` on Verify click. Cancellation calls real `/cancel` endpoint and updates UI from the server response. Loading/error states added.
+- `src/components/booking/booking-flow.tsx` — dropped the localStorage write that mirrored the new booking client-side.
+
+### Decisions tightened mid-slice
+
+1. **`LOCAL_DEMO_MODE` meaning narrows** — it now controls only the admin auth bypass (in `proxy.ts`) and the login page banner. All runtime data goes through Postgres regardless. The flag stays useful for testing without logging in but no longer gates persistence.
+2. **Booking starts as `confirmed` + `fully_paid` immediately on POST.** This is the pre-Stripe shortcut documented in a code comment in `queries.ts`. When Stripe is wired in the next slice, this initial status flips to `pending` + `unpaid` and the webhook handler does the upgrade.
+3. **Booking-ref race condition mitigated, not eliminated.** Advisory lock per property serializes creates for that property; MAX-suffix + 1 within the lock prevents collisions. Different properties insert concurrently. Multiple Node processes hitting the same property still hit the lock fine because advisory locks are session-level. The UNIQUE constraint is the final safety net.
+4. **Calendar grid rewritten to dynamic 14-day rolling window from today** instead of the hardcoded `2026-05-16..22` array (which was already stale on 2026-05-16 at write time).
+5. **Hero image gracefully degrades to no-image.** The DB `properties` table doesn't have a `hero_image_url` column; the type field stays optional; the booking page hides the hero block when absent. Adding the column is a small P2 follow-up.
+
+### Verification evidence
+
+- `npm run lint` clean
+- `npm run build` clean — same 22 routes, proxy middleware registered
+- End-to-end API smoke against the running dev server:
+  - `GET /api/properties/fjordview/rooms` returned `property.id = 49fb2c8a-...` and 4 active room_types from Postgres
+  - `GET /api/properties/fjordview/availability?checkIn=2026-07-01&checkOut=2026-07-03` returned the same property + 4 availability rows with real UUIDs
+  - `POST /api/properties/fjordview/bookings` with that data created `FV-2026-0003` for Test User, auto-assigned room `5fe272a2-...`, persisted to Postgres
+  - `GET /api/admin/bookings` immediately returned all three booking refs (0001, 0002, 0003) — proving the public POST and admin GET share state through the DB
+  - `GET /api/admin/dashboard` revenue field went from 4385 (one paid seed booking) to **7622.50 kr** — proving the new booking is being summed into admin stats
+
+### Git artifact
+- Commit `bc34daa` — `feat: route all pages and APIs through Drizzle queries` (29 files changed, +1200 / -328)
+
+### Pending after this slice
+- Stripe Checkout creation in booking POST (and the corresponding `pending` → `confirmed` flip in the webhook handler)
+- Stripe refund call in the cancel route
+- Real email sends + writing to `email_log` (templates also still skeletal)
+- Cron job bodies (reminders, thank-yous, cleaning generation, stale-pending cleanup)
+- Admin write paths (manual booking creation, room/pricing/cleaning CRUD)
+- Auth-aware admin queries — when `LOCAL_DEMO_MODE=false`, admin queries should derive `property_id` from the authenticated `admin_users` row via Supabase session instead of the env var default. Right now `admin/layout.tsx` and all admin pages use `env.defaultPropertySlug`. For the prototype with a single property this is fine; for multi-tenant rollout it must change.
+- Optional: add `hero_image_url` column to `properties` schema so the booking page hero shows again
+
+### Note on LOCAL_DEMO_MODE
+The flag is still `true` in `.env.local`. The behavior change in this slice: data is always real-DB regardless of the flag. To exercise the auth guard, flip to `false`, restart `npm run dev`, then hitting `/admin` will redirect to `/login` where `bithun@ibithun.com` / `admin1` signs in.
