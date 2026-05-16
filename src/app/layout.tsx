@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Fjordview Lodge Booking",
-  description: "Local demo booking system for Fjordview Lodge.",
+  title: "GuestHub Booking",
+  description: "Local demo booking system for small hotels and guesthouses.",
 };
 
 export default function RootLayout({
