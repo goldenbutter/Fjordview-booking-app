@@ -618,12 +618,10 @@ export async function getAdminSnapshotForProperty(propertyId: string): Promise<A
 
   const today = new Date().toISOString().slice(0, 10);
   const arrivals = activeBookings
-    .filter((b) => b.checkIn >= today)
-    .slice(0, 6)
+    .filter((b) => b.checkIn === today)
     .map((b) => enrichBooking(b, guests, rooms, roomTypes));
   const departures = activeBookings
-    .filter((b) => b.checkOut >= today)
-    .slice(0, 6)
+    .filter((b) => b.checkOut === today)
     .map((b) => enrichBooking(b, guests, rooms, roomTypes));
   const recentBookings = bookings.map((b) => enrichBooking(b, guests, rooms, roomTypes));
 
