@@ -19,6 +19,7 @@ export const demoProperty: Property = {
   country: "NO",
   timezone: "Europe/Oslo",
   currency: "NOK",
+  heroImageUrl: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=1600&q=80",
   contactEmail: "hello@fjordviewlodge.example",
   contactPhone: "+47 000 00 000",
   bookingRefPrefix: "FV",

@@ -83,31 +83,42 @@ export function CleaningList({ tasks }: { tasks: CleaningTask[] }) {
 }
 
 export function CalendarGrid({ bookings, rooms }: { bookings: Booking[]; rooms: Room[] }) {
-  const days = ["May 16", "May 17", "May 18", "May 19", "May 20", "May 21", "May 22"];
+  const days = [
+    { iso: "2026-05-16", label: "16.05" },
+    { iso: "2026-05-17", label: "17.05" },
+    { iso: "2026-05-18", label: "18.05" },
+    { iso: "2026-05-19", label: "19.05" },
+    { iso: "2026-05-20", label: "20.05" },
+    { iso: "2026-05-21", label: "21.05" },
+    { iso: "2026-05-22", label: "22.05" },
+  ];
+  const visibleBookings = bookings.filter((booking) => !["cancelled", "no_show"].includes(booking.status));
+
   return (
     <div className="overflow-auto rounded-lg border border-slate-200 bg-white shadow-sm">
       <div className="grid min-w-[840px]" style={{ gridTemplateColumns: `150px repeat(${days.length}, minmax(92px, 1fr))` }}>
         <div className="border-b border-slate-100 bg-slate-50 p-3 text-xs font-semibold uppercase text-slate-500">Room</div>
         {days.map((day) => (
-          <div key={day} className="border-b border-l border-slate-100 bg-slate-50 p-3 text-xs font-semibold uppercase text-slate-500">{day}</div>
+          <div key={day.iso} className="border-b border-l border-slate-100 bg-slate-50 p-3 text-xs font-semibold uppercase text-slate-500">{day.label}</div>
         ))}
-        {rooms.slice(0, 8).map((room, index) => (
-          <>
+        {rooms.map((room) => (
+          <div key={room.id} className="contents">
             <div key={`${room.id}-label`} className="border-b border-slate-100 p-3 text-sm font-semibold">Room {room.roomNumber}</div>
-            {days.map((day, dayIndex) => {
-              const booking = bookings[(index + dayIndex) % bookings.length];
-              const occupied = (index + dayIndex) % 4 === 0;
+            {days.map((day) => {
+              const booking = visibleBookings.find(
+                (item) => item.roomId === room.id && item.checkIn <= day.iso && item.checkOut > day.iso,
+              );
               return (
-                <div key={`${room.id}-${day}`} className="min-h-16 border-b border-l border-slate-100 p-2">
-                  {occupied ? (
-                    <div className="rounded-md bg-teal-100 px-2 py-1 text-xs font-semibold text-teal-800">
+                <div key={`${room.id}-${day.iso}`} className="min-h-16 border-b border-l border-slate-100 p-2">
+                  {booking ? (
+                    <div className="rounded-md bg-teal-100 px-2 py-1 text-xs font-semibold leading-5 text-teal-800">
                       {booking.bookingRef} · {roomTypeName(booking.roomTypeId)}
                     </div>
                   ) : null}
                 </div>
               );
             })}
-          </>
+          </div>
         ))}
       </div>
     </div>

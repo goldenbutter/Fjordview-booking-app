@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FieldLabel, SelectInput, TextArea, TextInput } from "@/components/ui/field";
 import { defaultDateRange } from "@/lib/pricing";
-import { formatCurrency, formatDate, nightsBetween } from "@/lib/utils";
+import { formatCurrency, formatDate, formatInputDate, nightsBetween, parseInputDate } from "@/lib/utils";
 import type { Locale, PriceBreakdown, Property, RoomType } from "@/types";
 
 type AvailableRoom = RoomType & {
@@ -42,6 +42,8 @@ export function BookingFlow({ property }: { property: Property }) {
   const dates = useMemo(() => defaultDateRange(), []);
   const [checkIn, setCheckIn] = useState(dates.checkIn);
   const [checkOut, setCheckOut] = useState(dates.checkOut);
+  const [checkInDisplay, setCheckInDisplay] = useState(formatInputDate(dates.checkIn));
+  const [checkOutDisplay, setCheckOutDisplay] = useState(formatInputDate(dates.checkOut));
   const [guestCount, setGuestCount] = useState(2);
   const [language, setLanguage] = useState<Locale>("en");
   const [rooms, setRooms] = useState<AvailableRoom[]>([]);
@@ -60,12 +62,20 @@ export function BookingFlow({ property }: { property: Property }) {
   });
 
   async function searchAvailability() {
+    const parsedCheckIn = parseInputDate(checkInDisplay);
+    const parsedCheckOut = parseInputDate(checkOutDisplay);
+    if (!parsedCheckIn || !parsedCheckOut) {
+      setError("Use Norwegian date format: dd.mm.yyyy.");
+      return;
+    }
+    setCheckIn(parsedCheckIn);
+    setCheckOut(parsedCheckOut);
     setLoading(true);
     setError("");
     setCreated(null);
     try {
       const response = await fetch(
-        `/api/properties/${property.slug}/availability?checkIn=${checkIn}&checkOut=${checkOut}`,
+        `/api/properties/${property.slug}/availability?checkIn=${parsedCheckIn}&checkOut=${parsedCheckOut}`,
       );
       const payload = await response.json();
       if (!response.ok) {
@@ -144,30 +154,50 @@ export function BookingFlow({ property }: { property: Property }) {
       <section className="mx-auto grid max-w-7xl gap-8 px-5 py-8 lg:grid-cols-[minmax(0,1.1fr)_420px]">
         <div className="space-y-6">
           <div className="overflow-hidden rounded-lg border border-teal-100 bg-white shadow-sm">
-            <div className="relative h-72">
-              <Image
-                src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=1600&q=80"
-                alt="Fjordview Lodge"
-                fill
-                className="object-cover"
-                priority
-                unoptimized
-              />
-              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/75 to-transparent p-6 text-white">
-                <h2 className="max-w-xl text-4xl font-semibold tracking-tight">Book a quiet fjord stay</h2>
-                <p className="mt-2 max-w-2xl text-sm text-white/85">
-                  Compare live demo availability, see nightly pricing rules, and create a test booking without real payment keys.
-                </p>
+            {property.heroImageUrl ? (
+              <div className="relative h-72">
+                <Image
+                  src={property.heroImageUrl}
+                  alt="Fjordview Lodge"
+                  fill
+                  className="object-cover"
+                  priority
+                  unoptimized
+                />
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/75 to-transparent p-6 text-white">
+                  <h2 className="max-w-xl text-4xl font-semibold tracking-tight">Book a quiet fjord stay</h2>
+                  <p className="mt-2 max-w-2xl text-sm text-white/85">
+                    Compare live demo availability, see nightly pricing rules, and create a test booking without real payment keys.
+                  </p>
+                </div>
               </div>
-            </div>
+            ) : null}
             <div className="grid gap-3 p-4 md:grid-cols-[1fr_1fr_120px_160px]">
               <div>
                 <FieldLabel>Check-in</FieldLabel>
-                <TextInput type="date" value={checkIn} onChange={(event) => setCheckIn(event.target.value)} />
+                <TextInput
+                  inputMode="numeric"
+                  placeholder="dd.mm.yyyy"
+                  value={checkInDisplay}
+                  onChange={(event) => setCheckInDisplay(event.target.value)}
+                  onBlur={() => {
+                    const parsed = parseInputDate(checkInDisplay);
+                    if (parsed) setCheckIn(parsed);
+                  }}
+                />
               </div>
               <div>
                 <FieldLabel>Check-out</FieldLabel>
-                <TextInput type="date" value={checkOut} onChange={(event) => setCheckOut(event.target.value)} />
+                <TextInput
+                  inputMode="numeric"
+                  placeholder="dd.mm.yyyy"
+                  value={checkOutDisplay}
+                  onChange={(event) => setCheckOutDisplay(event.target.value)}
+                  onBlur={() => {
+                    const parsed = parseInputDate(checkOutDisplay);
+                    if (parsed) setCheckOut(parsed);
+                  }}
+                />
               </div>
               <div>
                 <FieldLabel>Guests</FieldLabel>
@@ -234,7 +264,9 @@ export function BookingFlow({ property }: { property: Property }) {
                       <Badge tone={room.hasBathroom ? "green" : "amber"}>
                         {room.hasBathroom ? "Private bath" : "Shared bath"}
                       </Badge>
-                      <Badge tone="slate">Up to {room.maxGuests} guests</Badge>
+                      <Badge tone="slate">
+                        Up to {room.maxGuests} {room.maxGuests === 1 ? "guest" : "guests"}
+                      </Badge>
                     </div>
                     <div className="mt-4 grid gap-2 text-sm text-slate-600 sm:grid-cols-2">
                       {room.price.nights.map((night) => (

@@ -26,6 +26,7 @@ export type Property = {
   timezone: string;
   currency: string;
   logoUrl?: string;
+  heroImageUrl?: string;
   primaryColor: string;
   accentColor: string;
   contactEmail: string;
