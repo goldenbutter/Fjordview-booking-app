@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import type { AdminBookingRow, AdminCleaningRow } from "@/lib/db/queries";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import type { Room, RoomType } from "@/types";
+import type { Booking, Room, RoomType } from "@/types";
 
 export function StatCard({ label, value, detail }: { label: string; value: string; detail: string }) {
   return (
@@ -82,15 +82,25 @@ export function CleaningList({ tasks }: { tasks: AdminCleaningRow[] }) {
   );
 }
 
-export function CalendarGrid({ bookings, rooms }: { bookings: AdminBookingRow[]; rooms: Room[] }) {
-  // Two-week window starting today
-  const start = new Date();
-  start.setHours(0, 0, 0, 0);
-  const days = Array.from({ length: 14 }, (_, i) => {
-    const d = new Date(start);
-    d.setDate(d.getDate() + i);
+export function CalendarGrid({
+  bookings,
+  rooms,
+  start,
+  days: dayCount = 14,
+}: {
+  bookings: Booking[];
+  rooms: Room[];
+  start?: string;
+  days?: number;
+}) {
+  const startDate = start ? new Date(`${start}T00:00:00Z`) : new Date();
+  if (!start) startDate.setHours(0, 0, 0, 0);
+
+  const days = Array.from({ length: dayCount }, (_, i) => {
+    const d = new Date(startDate);
+    d.setUTCDate(d.getUTCDate() + i);
     const iso = d.toISOString().slice(0, 10);
-    const label = `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}`;
+    const label = `${String(d.getUTCDate()).padStart(2, "0")}.${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
     return { iso, label };
   });
   const visibleBookings = bookings.filter((booking) => !["cancelled", "no_show"].includes(booking.status));
@@ -113,7 +123,7 @@ export function CalendarGrid({ bookings, rooms }: { bookings: AdminBookingRow[];
                 <div key={`${room.id}-${day.iso}`} className="min-h-16 border-b border-l border-slate-100 p-2">
                   {booking ? (
                     <div className="rounded-md bg-teal-100 px-2 py-1 text-xs font-semibold leading-5 text-teal-800">
-                      {booking.bookingRef} · {booking.roomTypeLabel}
+                      {booking.bookingRef}
                     </div>
                   ) : null}
                 </div>
