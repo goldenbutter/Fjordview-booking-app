@@ -47,6 +47,8 @@ export function BookingFlow({ property }: { property: Property }) {
   const [rooms, setRooms] = useState<AvailableRoom[]>([]);
   const [selectedRoomId, setSelectedRoomId] = useState("");
   const [loading, setLoading] = useState(false);
+  const [bookingLoading, setBookingLoading] = useState(false);
+  const [error, setError] = useState("");
   const [created, setCreated] = useState<CreatedBooking | null>(null);
   const [form, setForm] = useState({
     firstName: "Ava",
@@ -59,41 +61,66 @@ export function BookingFlow({ property }: { property: Property }) {
 
   async function searchAvailability() {
     setLoading(true);
+    setError("");
     setCreated(null);
-    const response = await fetch(
-      `/api/properties/${property.slug}/availability?checkIn=${checkIn}&checkOut=${checkOut}`,
-    );
-    const payload = await response.json();
-    const availableRooms = payload.rooms ?? [];
-    setRooms(availableRooms);
-    setSelectedRoomId(availableRooms[0]?.id ?? "");
-    setLoading(false);
+    try {
+      const response = await fetch(
+        `/api/properties/${property.slug}/availability?checkIn=${checkIn}&checkOut=${checkOut}`,
+      );
+      const payload = await response.json();
+      if (!response.ok) {
+        throw new Error(payload.error ?? "Could not check availability");
+      }
+      const availableRooms = payload.rooms ?? [];
+      setRooms(availableRooms);
+      setSelectedRoomId(availableRooms[0]?.id ?? "");
+      if (availableRooms.length === 0) {
+        setError("No rooms are available for those dates.");
+      }
+    } catch (caught) {
+      setRooms([]);
+      setSelectedRoomId("");
+      setError(caught instanceof Error ? caught.message : "Could not check availability");
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function createBooking() {
-    const response = await fetch(`/api/properties/${property.slug}/bookings`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        roomTypeId: selectedRoomId,
-        checkIn,
-        checkOut,
-        guestCount,
-        guest: {
-          firstName: form.firstName,
-          lastName: form.lastName,
-          email: form.email,
-          phone: form.phone,
-          country: form.country,
-          language,
-        },
-        specialRequests: form.specialRequests,
-      }),
-    });
-    const payload = (await response.json()) as CreatedBooking;
-    setCreated(payload);
-    const stored = JSON.parse(localStorage.getItem("fjordview-bookings") ?? "[]");
-    localStorage.setItem("fjordview-bookings", JSON.stringify([payload, ...stored]));
+    setBookingLoading(true);
+    setError("");
+    try {
+      const response = await fetch(`/api/properties/${property.slug}/bookings`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          roomTypeId: selectedRoomId,
+          checkIn,
+          checkOut,
+          guestCount,
+          guest: {
+            firstName: form.firstName,
+            lastName: form.lastName,
+            email: form.email,
+            phone: form.phone,
+            country: form.country,
+            language,
+          },
+          specialRequests: form.specialRequests,
+        }),
+      });
+      const payload = (await response.json()) as CreatedBooking & { error?: unknown };
+      if (!response.ok) {
+        throw new Error(typeof payload.error === "string" ? payload.error : "Could not create booking");
+      }
+      setCreated(payload);
+      const stored = JSON.parse(localStorage.getItem("fjordview-bookings") ?? "[]");
+      localStorage.setItem("fjordview-bookings", JSON.stringify([payload, ...stored]));
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not create booking");
+    } finally {
+      setBookingLoading(false);
+    }
   }
 
   const selectedRoom = rooms.find((room) => room.id === selectedRoomId);
@@ -165,9 +192,11 @@ export function BookingFlow({ property }: { property: Property }) {
             {rooms.length === 0 ? (
               <div className="rounded-lg border border-dashed border-teal-200 bg-white p-8 text-center">
                 <BedDouble className="mx-auto h-8 w-8 text-teal-600" />
-                <h3 className="mt-3 text-lg font-semibold text-slate-950">Choose dates to see available rooms</h3>
+                <h3 className="mt-3 text-lg font-semibold text-slate-950">
+                  {error ? "Availability needs attention" : "Choose dates to see available rooms"}
+                </h3>
                 <p className="mt-1 text-sm text-slate-600">
-                  The local demo applies seasonal and weekend pricing from the OPUS prompt.
+                  {error || "The local demo applies seasonal and weekend pricing from the OPUS prompt."}
                 </p>
               </div>
             ) : (
@@ -286,9 +315,15 @@ export function BookingFlow({ property }: { property: Property }) {
             <p className="mt-2 text-xs text-slate-500">{property.cancellationInfo[language]}</p>
           </div>
 
-          <Button className="mt-5 w-full" disabled={!selectedRoom} onClick={createBooking}>
+          {error && rooms.length > 0 ? (
+            <div className="mt-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+              {error}
+            </div>
+          ) : null}
+
+          <Button className="mt-5 w-full" disabled={!selectedRoom || bookingLoading} onClick={createBooking}>
             <CreditCard className="h-4 w-4" />
-            Pay & confirm demo booking
+            {bookingLoading ? "Confirming booking" : "Pay & confirm demo booking"}
           </Button>
 
           {created ? (

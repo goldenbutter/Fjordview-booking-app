@@ -3,6 +3,7 @@ import { z } from "zod";
 import { autoAssignRoom, getAvailableRoomTypes } from "@/lib/availability";
 import { createBookingRef } from "@/lib/booking-ref";
 import { demoBookings, demoGuests, demoProperty } from "@/lib/db/seed";
+import { checkRateLimit, rateLimitKey } from "@/lib/rate-limit";
 
 const schema = z.object({
   roomTypeId: z.string(),
@@ -24,6 +25,11 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ slug: string }> },
 ) {
+  const limit = checkRateLimit(rateLimitKey(request, "booking-create"), 12);
+  if (!limit.allowed) {
+    return NextResponse.json({ error: "Too many booking attempts" }, { status: 429 });
+  }
+
   const { slug } = await params;
   if (slug !== demoProperty.slug) {
     return NextResponse.json({ error: "Property not found" }, { status: 404 });

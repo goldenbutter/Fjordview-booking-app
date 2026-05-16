@@ -5,6 +5,7 @@ import {
   BedDouble,
   CalendarDays,
   ClipboardList,
+  FileText,
   Gauge,
   Hotel,
   Settings,
@@ -23,6 +24,7 @@ const nav = [
   { href: "/admin/pricing", label: "Pricing", icon: Tags },
   { href: "/admin/cleaning", label: "Cleaning", icon: Sparkles },
   { href: "/admin/reports", label: "Reports", icon: BarChart3 },
+  { href: "/admin/invoices", label: "Invoices", icon: FileText },
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 

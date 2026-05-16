@@ -2,8 +2,8 @@
 
 ## Phase Goal
 
-Verify the local demo, capture browser screenshots, and prepare handoff for
-testing and OPUS review.
+Verify the local demo, finish practical polish items, capture browser
+screenshots, and prepare handoff for testing and OPUS review.
 
 ## Verification Evidence
 
@@ -14,6 +14,14 @@ testing and OPUS review.
   - demo booking confirmation
   - `/admin` dashboard render
   - `/book/fjordview` mobile availability search
+
+## Final Polish Added
+
+- Public API in-memory rate-limit helper for local/demo protection.
+- CSV export endpoint for admin reports.
+- Invoice list page with links to generated local-demo invoice output.
+- Guest booking flow loading and error states.
+- Acceptance-status map for OPUS and future agents.
 
 ## Screenshots
 
