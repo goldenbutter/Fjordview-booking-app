@@ -485,23 +485,34 @@ export async function cancelBooking(input: CancelBookingInput): Promise<CancelBo
       return { ok: false, reason: "email-mismatch" as const };
     }
 
-    const policyRows = await tx
-      .select()
-      .from(schema.cancellationPolicies)
-      .where(
-        and(
-          eq(schema.cancellationPolicies.propertyId, bookingRow.propertyId),
-          eq(schema.cancellationPolicies.isDefault, true),
-          eq(schema.cancellationPolicies.active, true),
-        ),
-      )
-      .limit(1);
-    const policy = policyRows[0] ? mapCancellationPolicy(policyRows[0]) : null;
+    const [policyRow, propertyRow] = await Promise.all([
+      tx
+        .select()
+        .from(schema.cancellationPolicies)
+        .where(
+          and(
+            eq(schema.cancellationPolicies.propertyId, bookingRow.propertyId),
+            eq(schema.cancellationPolicies.isDefault, true),
+            eq(schema.cancellationPolicies.active, true),
+          ),
+        )
+        .limit(1)
+        .then((rows) => rows[0]),
+      tx
+        .select()
+        .from(schema.properties)
+        .where(eq(schema.properties.id, bookingRow.propertyId))
+        .limit(1)
+        .then((rows) => rows[0]),
+    ]);
+    const policy = policyRow ? mapCancellationPolicy(policyRow) : null;
 
     let refundAmount = 0;
     if (policy) {
-      const hoursUntilCheckIn = Math.floor(
-        (new Date(`${bookingRow.checkIn}T00:00:00Z`).getTime() - Date.now()) / 36e5,
+      const hoursUntilCheckIn = hoursUntilCheckInForProperty(
+        bookingRow.checkIn,
+        propertyRow?.checkInTime ?? "15:00",
+        propertyRow?.timezone ?? "Europe/Oslo",
       );
       if (hoursUntilCheckIn < policy.deadlineHours) {
         return { ok: false, reason: "past-deadline" as const };
@@ -846,5 +857,42 @@ export async function getCalendarData(propertyId: string, start: string, end: st
     rooms: roomsRows.map(mapRoom),
     bookings: bookingsRows.map(mapBooking),
   };
+}
+
+// Compute hours from "now" until the property's local check-in moment.
+// Without this, treating the date as UTC midnight under-counts the window
+// for Europe/Oslo by ~15h and wrongly rejects legitimate cancellations.
+function hoursUntilCheckInForProperty(checkInDate: string, checkInTime: string, timeZone: string): number {
+  const time = checkInTime.length >= 5 ? checkInTime.slice(0, 5) : "15:00";
+  const isoLocal = `${checkInDate}T${time}:00`;
+  const offsetMinutes = timeZoneOffsetMinutes(isoLocal, timeZone);
+  const utcMs = Date.parse(`${isoLocal}Z`) - offsetMinutes * 60_000;
+  return (utcMs - Date.now()) / 36e5;
+}
+
+function timeZoneOffsetMinutes(isoLocal: string, timeZone: string): number {
+  const date = new Date(`${isoLocal}Z`);
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    hour12: false,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  }).formatToParts(date);
+  const map: Record<string, string> = {};
+  for (const p of parts) if (p.type !== "literal") map[p.type] = p.value;
+  const hour = map.hour === "24" ? "00" : map.hour;
+  const asUtc = Date.UTC(
+    Number(map.year),
+    Number(map.month) - 1,
+    Number(map.day),
+    Number(hour),
+    Number(map.minute),
+    Number(map.second),
+  );
+  return Math.round((asUtc - date.getTime()) / 60_000);
 }
 
