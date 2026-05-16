@@ -8,4 +8,7 @@ build/
 *.tsbuildinfo
 npm-debug.log*
 
+AGENTS.md
+CLAUDE.md
+
 _docs/verification/*.log
