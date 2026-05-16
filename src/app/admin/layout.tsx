@@ -34,8 +34,8 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   const propertyName = property?.name ?? "Admin";
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-950 lg:grid lg:grid-cols-[260px_1fr]">
-      <aside className="border-b border-slate-200 bg-white lg:min-h-screen lg:border-b-0 lg:border-r">
+    <div className="min-h-screen bg-slate-50 text-slate-950 lg:grid lg:grid-cols-[260px_1fr] print:block print:bg-white">
+      <aside className="border-b border-slate-200 bg-white lg:min-h-screen lg:border-b-0 lg:border-r print:hidden">
         <div className="flex items-center gap-3 px-5 py-5">
           <div className="flex h-10 w-10 items-center justify-center rounded-md bg-teal-600 text-white">
             <Hotel className="h-5 w-5" />
@@ -62,7 +62,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
         </nav>
       </aside>
       <div className="min-w-0">
-        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white px-5 py-4">
+        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white px-5 py-4 print:hidden">
           <div>
             <div className="text-sm text-slate-500">Signed in as</div>
             <div className="font-semibold">{env.localDemoMode ? "Demo Admin" : "Admin"}</div>
