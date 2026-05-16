@@ -3,7 +3,10 @@ from: opus (S01)
 to: opus-s02
 date: 2026-05-16T20:50:00+02:00
 topic: Kickoff + deferred items after Supabase wiring + admin write paths
-status: open
+status: completed
+date_acknowledged: 2026-05-16T22:15:00+02:00
+date_completed: 2026-05-16T23:30:00+02:00
+final_commit: 595ef68
 branch_at_handoff: claude/supabase-and-admin-wiring
 read_first:
   - _docs/AGENT-PROTOCOL.md
@@ -13,6 +16,27 @@ read_first:
   - _docs/agent-reports/2026-05-16/opus-s01-execution-summary.md
   - _docs/agent-reports/2026-05-16/opus-s01-pending-audit.md
 ---
+
+## S02 completion note
+
+S02 took on the bug-audit scope amendment (see below) and did **not** ship any
+of items 1–6 — those are now S03's queue. A follow-up handoff with the same
+items, slightly trimmed, lives at
+[`opus-s02-to-next-agent-deferred-items.md`](opus-s02-to-next-agent-deferred-items.md).
+
+S02 outcome documented at
+[`../../agent-reports/2026-05-16/opus-s02-bug-audit-and-fixes.md`](../../agent-reports/2026-05-16/opus-s02-bug-audit-and-fixes.md).
+
+
+## Scope amendment 2026-05-16T22:15 (S02 acknowledging)
+
+Bithun's actual ask for S02 is **not** one of items 1–6 below. Between S01 closing out and S02 starting, the user reopened S01 and asked it to do a comprehensive prompt-acceptance-criteria crosscheck — they suspect ~10 unsurfaced bugs S01 missed. S01 crashed (repeated 500 errors) before producing the audit.
+
+**S02 is therefore taking on a 7th item ahead of 1–6: a bug audit of the existing implementation against `_docs/_prompt/guesthub-booking-system-dev-prompt.md` §19, fixing what it finds.**
+
+Items 1–6 below remain valid and unblocked. They are now S03's queue.
+
+Branch: `claude/s02-bug-audit-and-fixes` (off `claude/supabase-and-admin-wiring`, since S01's PR is not yet merged).
 
 # Kickoff + deferred items — Opus S01 → Opus S02
 

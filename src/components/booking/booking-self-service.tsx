@@ -5,7 +5,13 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FieldLabel, TextArea, TextInput } from "@/components/ui/field";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import {
+  bookingStatusTone,
+  formatCurrency,
+  formatDate,
+  humanizeEnum,
+  paymentStatusTone,
+} from "@/lib/utils";
 import type { Booking, Guest, Locale, Property, Room, RoomType } from "@/types";
 
 type LoadedBooking = {
@@ -156,11 +162,11 @@ export function BookingSelfService({
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <Badge tone={data.booking.status === "cancelled" ? "rose" : "teal"}>
-                    {data.booking.status}
+                  <Badge tone={bookingStatusTone(data.booking.status)}>
+                    {humanizeEnum(data.booking.status)}
                   </Badge>
-                  <Badge tone={data.booking.paymentStatus === "refunded" ? "amber" : "green"}>
-                    {data.booking.paymentStatus}
+                  <Badge tone={paymentStatusTone(data.booking.paymentStatus)}>
+                    {humanizeEnum(data.booking.paymentStatus)}
                   </Badge>
                 </div>
               </div>

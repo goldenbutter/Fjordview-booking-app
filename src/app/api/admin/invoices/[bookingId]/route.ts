@@ -1,23 +1,12 @@
 import { NextResponse } from "next/server";
-import { eq } from "drizzle-orm";
-import { getDb } from "@/lib/db";
-import * as schema from "@/lib/db/schema";
 import { createInvoiceText } from "@/lib/invoice";
-import { getBookingByRef } from "@/lib/db/queries";
+import { getBookingDetail } from "@/lib/db/queries";
 
 async function invoiceResponse(params: Promise<{ bookingId: string }>) {
   const { bookingId } = await params;
 
-  // Accept either a UUID id or a booking ref for convenience
-  const db = getDb();
-  const byId = await db
-    .select({ ref: schema.bookings.bookingRef })
-    .from(schema.bookings)
-    .where(eq(schema.bookings.id, bookingId))
-    .limit(1);
-  const ref = byId[0]?.ref ?? bookingId;
-
-  const result = await getBookingByRef(ref);
+  // Accepts either a UUID id or a booking ref for convenience.
+  const result = await getBookingDetail(bookingId);
   if (!result) {
     return NextResponse.json({ error: "Booking not found" }, { status: 404 });
   }

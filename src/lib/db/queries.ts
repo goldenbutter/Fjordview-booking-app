@@ -6,6 +6,7 @@ import {
   getAvailableRoomTypes as getAvailableRoomTypesPure,
 } from "@/lib/availability";
 import { createBookingRef } from "@/lib/booking-ref";
+import { isUuid } from "@/lib/api-validation";
 import type {
   Booking,
   CancellationPolicy,
@@ -231,6 +232,13 @@ export type CreateBookingInput = {
     phone?: string;
     country?: string;
   };
+  // Optional overrides used by the admin manual-booking flow.
+  // For the public flow these stay undefined and the booking is recorded
+  // as confirmed + fully_paid + paidAmount = totalPrice.
+  status?: Booking["status"];
+  paymentStatus?: PaymentStatus;
+  paidAmount?: number;
+  source?: Booking["source"];
 };
 
 export type CreateBookingResult = {
@@ -243,6 +251,11 @@ export type CreateBookingResult = {
 
 export async function createBooking(input: CreateBookingInput): Promise<CreateBookingResult> {
   const db = getDb();
+
+  const status = input.status ?? "confirmed";
+  const paymentStatus = input.paymentStatus ?? "fully_paid";
+  const paidAmount = input.paidAmount ?? input.totalPrice;
+  const source = input.source ?? "direct";
 
   return db.transaction(async (tx) => {
     // Lock per-property to serialize booking ref generation + room assignment for this property.
@@ -316,7 +329,7 @@ export async function createBooking(input: CreateBookingInput): Promise<CreateBo
           country: input.guest.country ?? previous.country,
           language: input.language,
           totalBookings: (previous.totalBookings ?? 0) + 1,
-          totalSpent: (previous.totalSpent ?? 0) + input.totalPrice,
+          totalSpent: (previous.totalSpent ?? 0) + paidAmount,
         })
         .where(eq(schema.guests.id, previous.id))
         .returning();
@@ -333,7 +346,7 @@ export async function createBooking(input: CreateBookingInput): Promise<CreateBo
           country: input.guest.country,
           language: input.language,
           totalBookings: 1,
-          totalSpent: input.totalPrice,
+          totalSpent: paidAmount,
         })
         .returning();
       guestRow = inserted;
@@ -359,10 +372,10 @@ export async function createBooking(input: CreateBookingInput): Promise<CreateBo
     }, 0);
     const bookingRef = createBookingRef(refPrefix, highest + 1, new Date());
 
-    // NOTE: Stripe Checkout is not yet wired. For the prototype, we treat a successful
-    // POST as "confirmed + fully_paid" so the demo flow shows real persistence end-to-end.
-    // When Stripe wiring lands, change initial status to "pending" / "unpaid"; the
-    // webhook handler will flip it to "confirmed" / "fully_paid".
+    // NOTE: Stripe Checkout is not yet wired. For the public flow, default is
+    // "confirmed + fully_paid" so the demo shows real persistence end-to-end.
+    // The admin manual-booking flow passes status/paymentStatus/paidAmount
+    // through for walk-ins paid at reception, deposits, or pay-later.
     const [bookingRow] = await tx
       .insert(schema.bookings)
       .values({
@@ -371,16 +384,16 @@ export async function createBooking(input: CreateBookingInput): Promise<CreateBo
         roomTypeId: input.roomTypeId,
         guestId: guestRow.id,
         bookingRef,
-        status: "confirmed",
+        status,
         checkIn: input.checkIn,
         checkOut: input.checkOut,
         guestCount: input.guestCount,
         totalPrice: input.totalPrice,
         currency: input.currency,
-        paymentStatus: "fully_paid",
-        paidAmount: input.totalPrice,
+        paymentStatus,
+        paidAmount,
         specialRequests: input.specialRequests,
-        source: "direct",
+        source,
         language: input.language,
       })
       .returning();
@@ -485,23 +498,34 @@ export async function cancelBooking(input: CancelBookingInput): Promise<CancelBo
       return { ok: false, reason: "email-mismatch" as const };
     }
 
-    const policyRows = await tx
-      .select()
-      .from(schema.cancellationPolicies)
-      .where(
-        and(
-          eq(schema.cancellationPolicies.propertyId, bookingRow.propertyId),
-          eq(schema.cancellationPolicies.isDefault, true),
-          eq(schema.cancellationPolicies.active, true),
-        ),
-      )
-      .limit(1);
-    const policy = policyRows[0] ? mapCancellationPolicy(policyRows[0]) : null;
+    const [policyRow, propertyRow] = await Promise.all([
+      tx
+        .select()
+        .from(schema.cancellationPolicies)
+        .where(
+          and(
+            eq(schema.cancellationPolicies.propertyId, bookingRow.propertyId),
+            eq(schema.cancellationPolicies.isDefault, true),
+            eq(schema.cancellationPolicies.active, true),
+          ),
+        )
+        .limit(1)
+        .then((rows) => rows[0]),
+      tx
+        .select()
+        .from(schema.properties)
+        .where(eq(schema.properties.id, bookingRow.propertyId))
+        .limit(1)
+        .then((rows) => rows[0]),
+    ]);
+    const policy = policyRow ? mapCancellationPolicy(policyRow) : null;
 
     let refundAmount = 0;
     if (policy) {
-      const hoursUntilCheckIn = Math.floor(
-        (new Date(`${bookingRow.checkIn}T00:00:00Z`).getTime() - Date.now()) / 36e5,
+      const hoursUntilCheckIn = hoursUntilCheckInForProperty(
+        bookingRow.checkIn,
+        propertyRow?.checkInTime ?? "15:00",
+        propertyRow?.timezone ?? "Europe/Oslo",
       );
       if (hoursUntilCheckIn < policy.deadlineHours) {
         return { ok: false, reason: "past-deadline" as const };
@@ -618,12 +642,10 @@ export async function getAdminSnapshotForProperty(propertyId: string): Promise<A
 
   const today = new Date().toISOString().slice(0, 10);
   const arrivals = activeBookings
-    .filter((b) => b.checkIn >= today)
-    .slice(0, 6)
+    .filter((b) => b.checkIn === today)
     .map((b) => enrichBooking(b, guests, rooms, roomTypes));
   const departures = activeBookings
-    .filter((b) => b.checkOut >= today)
-    .slice(0, 6)
+    .filter((b) => b.checkOut === today)
     .map((b) => enrichBooking(b, guests, rooms, roomTypes));
   const recentBookings = bookings.map((b) => enrichBooking(b, guests, rooms, roomTypes));
 
@@ -709,45 +731,38 @@ export async function listBookings(propertyId: string, filters: BookingsListFilt
 
 // ---- Booking detail (admin) ----
 
-export async function getBookingDetail(bookingId: string) {
-  const db = getDb();
-  const bookingRows = await db.select().from(schema.bookings).where(eq(schema.bookings.id, bookingId)).limit(1);
-  if (bookingRows.length === 0) return null;
-  return getBookingByRef(bookingRows[0].bookingRef);
+// Accepts either a booking UUID or a booking ref (e.g. "FV-2026-0001").
+// Returns null for malformed IDs rather than letting Postgres raise.
+export async function getBookingDetail(idOrRef: string) {
+  if (isUuid(idOrRef)) {
+    const db = getDb();
+    const bookingRows = await db
+      .select()
+      .from(schema.bookings)
+      .where(eq(schema.bookings.id, idOrRef))
+      .limit(1);
+    if (bookingRows.length === 0) return null;
+    return getBookingByRef(bookingRows[0].bookingRef);
+  }
+  return getBookingByRef(idOrRef);
 }
 
 // ---- Admin booking create (manual / walk-in) ----
 
-export type CreateAdminBookingInput = CreateBookingInput & {
-  paymentStatus?: PaymentStatus;
-  paidAmount?: number;
-};
+export type CreateAdminBookingInput = CreateBookingInput;
 
 export async function createAdminBooking(input: CreateAdminBookingInput): Promise<CreateBookingResult> {
-  // For manual bookings we reuse the same transactional helper, then override payment status if needed.
-  const result = await createBooking({
+  const paymentStatus = input.paymentStatus ?? "fully_paid";
+  // For unpaid/deposit walk-ins the guest hasn't paid the full total yet; only
+  // count what they actually handed over against guests.totalSpent.
+  const paidAmount =
+    input.paidAmount ?? (paymentStatus === "fully_paid" ? input.totalPrice : 0);
+  return createBooking({
     ...input,
-    guest: input.guest,
+    paymentStatus,
+    paidAmount,
+    source: input.source ?? "admin",
   });
-  if (input.paymentStatus && input.paymentStatus !== "fully_paid") {
-    const db = getDb();
-    await db
-      .update(schema.bookings)
-      .set({
-        paymentStatus: input.paymentStatus,
-        paidAmount: input.paidAmount ?? 0,
-        source: "admin",
-      })
-      .where(eq(schema.bookings.id, result.booking.id));
-    return {
-      ...result,
-      booking: { ...result.booking, paymentStatus: input.paymentStatus, paidAmount: input.paidAmount ?? 0, source: "admin" },
-    };
-  }
-  // Fully-paid manual bookings still flagged as source=admin
-  const db = getDb();
-  await db.update(schema.bookings).set({ source: "admin" }).where(eq(schema.bookings.id, result.booking.id));
-  return { ...result, booking: { ...result.booking, source: "admin" } };
 }
 
 // ---- Cleaning task status update ----
@@ -848,5 +863,42 @@ export async function getCalendarData(propertyId: string, start: string, end: st
     rooms: roomsRows.map(mapRoom),
     bookings: bookingsRows.map(mapBooking),
   };
+}
+
+// Compute hours from "now" until the property's local check-in moment.
+// Without this, treating the date as UTC midnight under-counts the window
+// for Europe/Oslo by ~15h and wrongly rejects legitimate cancellations.
+function hoursUntilCheckInForProperty(checkInDate: string, checkInTime: string, timeZone: string): number {
+  const time = checkInTime.length >= 5 ? checkInTime.slice(0, 5) : "15:00";
+  const isoLocal = `${checkInDate}T${time}:00`;
+  const offsetMinutes = timeZoneOffsetMinutes(isoLocal, timeZone);
+  const utcMs = Date.parse(`${isoLocal}Z`) - offsetMinutes * 60_000;
+  return (utcMs - Date.now()) / 36e5;
+}
+
+function timeZoneOffsetMinutes(isoLocal: string, timeZone: string): number {
+  const date = new Date(`${isoLocal}Z`);
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    hour12: false,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  }).formatToParts(date);
+  const map: Record<string, string> = {};
+  for (const p of parts) if (p.type !== "literal") map[p.type] = p.value;
+  const hour = map.hour === "24" ? "00" : map.hour;
+  const asUtc = Date.UTC(
+    Number(map.year),
+    Number(map.month) - 1,
+    Number(map.day),
+    Number(hour),
+    Number(map.minute),
+    Number(map.second),
+  );
+  return Math.round((asUtc - date.getTime()) / 60_000);
 }
 

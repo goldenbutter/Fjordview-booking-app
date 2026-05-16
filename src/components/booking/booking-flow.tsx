@@ -51,12 +51,12 @@ export function BookingFlow({ property }: { property: Property }) {
   const [error, setError] = useState("");
   const [created, setCreated] = useState<CreatedBooking | null>(null);
   const [form, setForm] = useState({
-    firstName: "Ava",
-    lastName: "Nord",
-    email: "ava@example.com",
-    phone: "+47 400 00 123",
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
     country: "NO",
-    specialRequests: "Late arrival around 20:00.",
+    specialRequests: "",
   });
 
   async function searchAvailability() {
@@ -127,6 +127,7 @@ export function BookingFlow({ property }: { property: Property }) {
 
   const selectedRoom = rooms.find((room) => room.id === selectedRoomId);
   const nights = nightsBetween(checkIn, checkOut);
+  const guestFormValid = form.firstName.trim() && form.lastName.trim() && /.+@.+\..+/.test(form.email);
 
   return (
     <main className="min-h-screen bg-[#f8faf9]">
@@ -231,14 +232,20 @@ export function BookingFlow({ property }: { property: Property }) {
                   }`}
                 >
                   <div className="relative h-48 md:h-full">
-                    <Image
-                      src={room.photoUrls[0]}
-                      alt={room.name[language]}
-                      fill
-                      className="object-cover"
-                      loading="eager"
-                      unoptimized
-                    />
+                    {room.photoUrls[0] ? (
+                      <Image
+                        src={room.photoUrls[0]}
+                        alt={room.name[language]}
+                        fill
+                        className="object-cover"
+                        loading="eager"
+                        unoptimized
+                      />
+                    ) : (
+                      <div className="flex h-full items-center justify-center bg-slate-100 text-slate-400">
+                        <BedDouble className="h-10 w-10" />
+                      </div>
+                    )}
                   </div>
                   <div className="p-5">
                     <div className="flex flex-wrap items-start justify-between gap-3">
@@ -345,10 +352,19 @@ export function BookingFlow({ property }: { property: Property }) {
             </div>
           ) : null}
 
-          <Button className="mt-5 w-full" disabled={!selectedRoom || bookingLoading} onClick={createBooking}>
+          <Button
+            className="mt-5 w-full"
+            disabled={!selectedRoom || bookingLoading || !guestFormValid}
+            onClick={createBooking}
+          >
             <CreditCard className="h-4 w-4" />
             {bookingLoading ? "Confirming booking" : "Pay & confirm demo booking"}
           </Button>
+          {!guestFormValid && selectedRoom ? (
+            <p className="mt-2 text-xs text-slate-500">
+              Enter your first name, last name, and a valid email to continue.
+            </p>
+          ) : null}
 
           {created ? (
             <div className="mt-5 rounded-md border border-emerald-200 bg-emerald-50 p-4">

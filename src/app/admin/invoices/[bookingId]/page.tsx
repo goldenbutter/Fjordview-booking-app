@@ -5,9 +5,9 @@ import { ArrowLeft, FileJson } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { getDb } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
-import { getBookingByRef } from "@/lib/db/queries";
+import { getBookingDetail } from "@/lib/db/queries";
 import { calculateStayPrice } from "@/lib/pricing";
-import { formatCurrency, formatDate, nightsBetween } from "@/lib/utils";
+import { formatCurrency, formatDate, humanizeEnum, nightsBetween } from "@/lib/utils";
 import { PrintButton } from "./print-button";
 
 // Norwegian accommodation VAT (MVA): 12%
@@ -20,19 +20,11 @@ export default async function InvoiceDetailPage({
 }) {
   const { bookingId } = await params;
 
-  const db = getDb();
-  const byId = await db
-    .select({ ref: schema.bookings.bookingRef })
-    .from(schema.bookings)
-    .where(eq(schema.bookings.id, bookingId))
-    .limit(1);
-  const ref = byId[0]?.ref ?? bookingId;
-
-  const data = await getBookingByRef(ref);
+  const data = await getBookingDetail(bookingId);
   if (!data) notFound();
   const { property, booking, guest, roomType, room } = data;
 
-  // Fetch pricing rules to compute per-night breakdown
+  const db = getDb();
   const pricingRuleRows = await db
     .select()
     .from(schema.pricingRules)
@@ -166,7 +158,7 @@ export default async function InvoiceDetailPage({
         <section className="mt-8 flex flex-wrap items-center justify-between gap-3 rounded-md bg-slate-50 p-4 print:bg-transparent print:border print:border-slate-300">
           <div>
             <p className="text-xs uppercase tracking-wider text-slate-500">Payment status</p>
-            <p className="mt-1 text-base font-semibold text-slate-950">{booking.paymentStatus.replace("_", " ")}</p>
+            <p className="mt-1 text-base font-semibold text-slate-950">{humanizeEnum(booking.paymentStatus)}</p>
           </div>
           <Badge tone={booking.paymentStatus === "fully_paid" ? "green" : booking.paymentStatus === "refunded" ? "amber" : "slate"}>
             {formatCurrency(booking.paidAmount ?? 0, booking.currency)} paid
