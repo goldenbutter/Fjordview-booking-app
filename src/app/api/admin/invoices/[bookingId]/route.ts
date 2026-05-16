@@ -1,20 +1,35 @@
 import { NextResponse } from "next/server";
+import { eq } from "drizzle-orm";
+import { getDb } from "@/lib/db";
+import * as schema from "@/lib/db/schema";
 import { createInvoiceText } from "@/lib/invoice";
-import { demoBookings, demoGuests, demoProperty, demoRoomTypes } from "@/lib/db/seed";
+import { getBookingByRef } from "@/lib/db/queries";
 
 async function invoiceResponse(params: Promise<{ bookingId: string }>) {
   const { bookingId } = await params;
-  const booking = demoBookings.find((item) => item.id === bookingId);
-  const guest = booking ? demoGuests.find((item) => item.id === booking.guestId) : undefined;
-  const roomType = booking ? demoRoomTypes.find((item) => item.id === booking.roomTypeId) : undefined;
 
-  if (!booking || !guest || !roomType) {
+  // Accept either a UUID id or a booking ref for convenience
+  const db = getDb();
+  const byId = await db
+    .select({ ref: schema.bookings.bookingRef })
+    .from(schema.bookings)
+    .where(eq(schema.bookings.id, bookingId))
+    .limit(1);
+  const ref = byId[0]?.ref ?? bookingId;
+
+  const result = await getBookingByRef(ref);
+  if (!result) {
     return NextResponse.json({ error: "Booking not found" }, { status: 404 });
   }
 
   return NextResponse.json({
     mode: "local-demo",
-    invoice: createInvoiceText({ property: demoProperty, booking, guest, roomType }),
+    invoice: createInvoiceText({
+      property: result.property,
+      booking: result.booking,
+      guest: result.guest,
+      roomType: result.roomType,
+    }),
   });
 }
 

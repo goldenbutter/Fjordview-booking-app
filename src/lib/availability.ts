@@ -1,20 +1,33 @@
-import { demoBookings, demoPricingRules, demoRooms, demoRoomTypes } from "@/lib/db/seed";
 import { calculateStayPrice } from "@/lib/pricing";
-import type { Booking } from "@/types";
+import type { Booking, PricingRule, Room, RoomType } from "@/types";
 
 export function rangesOverlap(aStart: string, aEnd: string, bStart: string, bEnd: string) {
   return aStart < bEnd && aEnd > bStart;
 }
 
-export function getAvailableRoomTypes(propertyId: string, checkIn: string, checkOut: string) {
-  return demoRoomTypes
+export type AvailableRoomType = RoomType & {
+  totalRooms: number;
+  availableCount: number;
+  price: ReturnType<typeof calculateStayPrice>;
+};
+
+export function getAvailableRoomTypes(
+  propertyId: string,
+  checkIn: string,
+  checkOut: string,
+  roomTypes: RoomType[],
+  rooms: Room[],
+  bookings: Booking[],
+  pricingRules: PricingRule[],
+): AvailableRoomType[] {
+  return roomTypes
     .filter((roomType) => roomType.propertyId === propertyId && roomType.active)
     .map((roomType) => {
-      const rooms = demoRooms.filter(
+      const typeRooms = rooms.filter(
         (room) => room.propertyId === propertyId && room.roomTypeId === roomType.id && room.active,
       );
       const bookedRoomIds = new Set(
-        demoBookings
+        bookings
           .filter(
             (booking) =>
               booking.propertyId === propertyId &&
@@ -29,13 +42,13 @@ export function getAvailableRoomTypes(propertyId: string, checkIn: string, check
         roomType.basePrice,
         checkIn,
         checkOut,
-        demoPricingRules.filter((rule) => !rule.roomTypeId || rule.roomTypeId === roomType.id),
+        pricingRules.filter((rule) => !rule.roomTypeId || rule.roomTypeId === roomType.id),
       );
 
       return {
         ...roomType,
-        totalRooms: rooms.length,
-        availableCount: Math.max(0, rooms.length - bookedRoomIds.size),
+        totalRooms: typeRooms.length,
+        availableCount: Math.max(0, typeRooms.length - bookedRoomIds.size),
         price,
       };
     })
@@ -43,14 +56,18 @@ export function getAvailableRoomTypes(propertyId: string, checkIn: string, check
     .sort((a, b) => a.sortOrder - b.sortOrder);
 }
 
-export function autoAssignRoom(booking: Pick<Booking, "roomTypeId" | "checkIn" | "checkOut" | "propertyId">) {
-  const candidates = demoRooms.filter(
+export function autoAssignRoom(
+  booking: Pick<Booking, "roomTypeId" | "checkIn" | "checkOut" | "propertyId">,
+  rooms: Room[],
+  existingBookings: Booking[],
+): Room | null {
+  const candidates = rooms.filter(
     (room) => room.propertyId === booking.propertyId && room.roomTypeId === booking.roomTypeId && room.active,
   );
 
   const available = candidates.filter(
     (room) =>
-      !demoBookings.some(
+      !existingBookings.some(
         (existing) =>
           existing.roomId === room.id &&
           !["cancelled", "no_show"].includes(existing.status) &&
@@ -58,13 +75,17 @@ export function autoAssignRoom(booking: Pick<Booking, "roomTypeId" | "checkIn" |
       ),
   );
 
-  return available.sort((a, b) => lastRoomCheckout(a.id) - lastRoomCheckout(b.id))[0] ?? null;
+  if (available.length === 0) return null;
+
+  return (
+    available.sort((a, b) => lastRoomCheckout(a.id, existingBookings) - lastRoomCheckout(b.id, existingBookings))[0] ??
+    null
+  );
 }
 
-function lastRoomCheckout(roomId: string) {
-  const checkouts = demoBookings
+function lastRoomCheckout(roomId: string, bookings: Booking[]) {
+  const checkouts = bookings
     .filter((booking) => booking.roomId === roomId && !["cancelled", "no_show"].includes(booking.status))
     .map((booking) => new Date(booking.checkOut).getTime());
-
   return checkouts.length > 0 ? Math.max(...checkouts) : 0;
 }

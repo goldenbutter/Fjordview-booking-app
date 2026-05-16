@@ -1,5 +1,7 @@
+import { notFound } from "next/navigation";
 import { BookingSelfService } from "@/components/booking/booking-self-service";
-import { demoProperty } from "@/lib/db/seed";
+import { getPropertyBySlug } from "@/lib/db/queries";
+import { env } from "@/lib/env";
 
 export default async function BookingReferencePage({
   params,
@@ -10,11 +12,15 @@ export default async function BookingReferencePage({
 }) {
   const { ref } = await params;
   const query = await searchParams;
+  const property = await getPropertyBySlug(env.defaultPropertySlug);
+  if (!property) {
+    notFound();
+  }
 
   return (
     <BookingSelfService
       bookingRef={decodeURIComponent(ref)}
-      property={demoProperty}
+      property={property}
       initialEmail={query.email}
       success={query.success === "true"}
     />

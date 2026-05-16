@@ -6,9 +6,8 @@ import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FieldLabel, SelectInput, TextArea, TextInput } from "@/components/ui/field";
-import { demoBookingStorageKey } from "@/lib/demo-storage";
 import { defaultDateRange } from "@/lib/pricing";
-import { formatCurrency, formatDate, formatInputDate, nightsBetween, parseInputDate } from "@/lib/utils";
+import { formatCurrency, formatDate, nightsBetween } from "@/lib/utils";
 import type { Locale, PriceBreakdown, Property, RoomType } from "@/types";
 
 type AvailableRoom = RoomType & {
@@ -43,8 +42,6 @@ export function BookingFlow({ property }: { property: Property }) {
   const dates = useMemo(() => defaultDateRange(), []);
   const [checkIn, setCheckIn] = useState(dates.checkIn);
   const [checkOut, setCheckOut] = useState(dates.checkOut);
-  const [checkInDisplay, setCheckInDisplay] = useState(formatInputDate(dates.checkIn));
-  const [checkOutDisplay, setCheckOutDisplay] = useState(formatInputDate(dates.checkOut));
   const [guestCount, setGuestCount] = useState(2);
   const [language, setLanguage] = useState<Locale>("en");
   const [rooms, setRooms] = useState<AvailableRoom[]>([]);
@@ -63,20 +60,16 @@ export function BookingFlow({ property }: { property: Property }) {
   });
 
   async function searchAvailability() {
-    const parsedCheckIn = parseInputDate(checkInDisplay);
-    const parsedCheckOut = parseInputDate(checkOutDisplay);
-    if (!parsedCheckIn || !parsedCheckOut) {
-      setError("Use Norwegian date format: dd.mm.yyyy.");
+    if (!checkIn || !checkOut || checkOut <= checkIn) {
+      setError("Pick a check-out date after the check-in date.");
       return;
     }
-    setCheckIn(parsedCheckIn);
-    setCheckOut(parsedCheckOut);
     setLoading(true);
     setError("");
     setCreated(null);
     try {
       const response = await fetch(
-        `/api/properties/${property.slug}/availability?checkIn=${parsedCheckIn}&checkOut=${parsedCheckOut}`,
+        `/api/properties/${property.slug}/availability?checkIn=${checkIn}&checkOut=${checkOut}`,
       );
       const payload = await response.json();
       if (!response.ok) {
@@ -125,9 +118,6 @@ export function BookingFlow({ property }: { property: Property }) {
         throw new Error(typeof payload.error === "string" ? payload.error : "Could not create booking");
       }
       setCreated(payload);
-      const storageKey = demoBookingStorageKey(property.slug);
-      const stored = JSON.parse(localStorage.getItem(storageKey) ?? "[]");
-      localStorage.setItem(storageKey, JSON.stringify([payload, ...stored]));
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not create booking");
     } finally {
@@ -178,27 +168,27 @@ export function BookingFlow({ property }: { property: Property }) {
               <div>
                 <FieldLabel>Check-in</FieldLabel>
                 <TextInput
-                  inputMode="numeric"
-                  placeholder="dd.mm.yyyy"
-                  value={checkInDisplay}
-                  onChange={(event) => setCheckInDisplay(event.target.value)}
-                  onBlur={() => {
-                    const parsed = parseInputDate(checkInDisplay);
-                    if (parsed) setCheckIn(parsed);
+                  type="date"
+                  value={checkIn}
+                  min={new Date().toISOString().slice(0, 10)}
+                  onChange={(event) => {
+                    const next = event.target.value;
+                    setCheckIn(next);
+                    if (next && checkOut <= next) {
+                      const after = new Date(next);
+                      after.setDate(after.getDate() + 1);
+                      setCheckOut(after.toISOString().slice(0, 10));
+                    }
                   }}
                 />
               </div>
               <div>
                 <FieldLabel>Check-out</FieldLabel>
                 <TextInput
-                  inputMode="numeric"
-                  placeholder="dd.mm.yyyy"
-                  value={checkOutDisplay}
-                  onChange={(event) => setCheckOutDisplay(event.target.value)}
-                  onBlur={() => {
-                    const parsed = parseInputDate(checkOutDisplay);
-                    if (parsed) setCheckOut(parsed);
-                  }}
+                  type="date"
+                  value={checkOut}
+                  min={checkIn}
+                  onChange={(event) => setCheckOut(event.target.value)}
                 />
               </div>
               <div>

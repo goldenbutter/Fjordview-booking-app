@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
-import { bookingGuestName, roomNumber, roomTypeName } from "@/lib/admin-metrics";
+import type { AdminBookingRow, AdminCleaningRow } from "@/lib/db/queries";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import type { Booking, CleaningTask, Room, RoomType } from "@/types";
+import type { Booking, Room, RoomType } from "@/types";
 
 export function StatCard({ label, value, detail }: { label: string; value: string; detail: string }) {
   return (
@@ -13,7 +13,7 @@ export function StatCard({ label, value, detail }: { label: string; value: strin
   );
 }
 
-export function BookingTable({ bookings }: { bookings: Booking[] }) {
+export function BookingTable({ bookings }: { bookings: AdminBookingRow[] }) {
   return (
     <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
       <table className="w-full min-w-[760px] text-left text-sm">
@@ -32,8 +32,8 @@ export function BookingTable({ bookings }: { bookings: Booking[] }) {
           {bookings.map((booking) => (
             <tr key={booking.id}>
               <td className="px-4 py-3 font-semibold text-teal-700">{booking.bookingRef}</td>
-              <td className="px-4 py-3">{bookingGuestName(booking.guestId)}</td>
-              <td className="px-4 py-3">{roomNumber(booking.roomId)}</td>
+              <td className="px-4 py-3">{booking.guestName}</td>
+              <td className="px-4 py-3">{booking.roomLabel}</td>
               <td className="px-4 py-3">{formatDate(booking.checkIn)} - {formatDate(booking.checkOut)}</td>
               <td className="px-4 py-3"><Badge tone={booking.status === "confirmed" ? "teal" : "amber"}>{booking.status}</Badge></td>
               <td className="px-4 py-3"><Badge tone={booking.paymentStatus === "fully_paid" ? "green" : "amber"}>{booking.paymentStatus}</Badge></td>
@@ -66,13 +66,13 @@ export function RoomInventory({ rooms, roomTypes }: { rooms: Room[]; roomTypes: 
   );
 }
 
-export function CleaningList({ tasks }: { tasks: CleaningTask[] }) {
+export function CleaningList({ tasks }: { tasks: AdminCleaningRow[] }) {
   return (
     <div className="grid gap-3">
       {tasks.map((task) => (
         <div key={task.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
           <div>
-            <div className="font-semibold text-slate-950">Room {roomNumber(task.roomId)}</div>
+            <div className="font-semibold text-slate-950">Room {task.roomLabel}</div>
             <div className="text-sm text-slate-500">{formatDate(task.taskDate)} · Assigned to {task.assignedTo ?? "Unassigned"}</div>
           </div>
           <Badge tone={task.status === "completed" ? "green" : "amber"}>{task.status.replace("_", " ")}</Badge>
@@ -82,21 +82,66 @@ export function CleaningList({ tasks }: { tasks: CleaningTask[] }) {
   );
 }
 
-export function CalendarGrid({ bookings, rooms }: { bookings: Booking[]; rooms: Room[] }) {
-  const days = [
-    { iso: "2026-05-16", label: "16.05" },
-    { iso: "2026-05-17", label: "17.05" },
-    { iso: "2026-05-18", label: "18.05" },
-    { iso: "2026-05-19", label: "19.05" },
-    { iso: "2026-05-20", label: "20.05" },
-    { iso: "2026-05-21", label: "21.05" },
-    { iso: "2026-05-22", label: "22.05" },
+function calendarBlockTone(status: string) {
+  switch (status) {
+    case "confirmed":
+      return "bg-teal-100 text-teal-900 ring-1 ring-teal-200";
+    case "checked_in":
+      return "bg-emerald-200 text-emerald-900 ring-1 ring-emerald-300";
+    case "checked_out":
+      return "bg-slate-200 text-slate-800 ring-1 ring-slate-300";
+    case "pending":
+      return "bg-amber-100 text-amber-900 ring-1 ring-amber-200";
+    default:
+      return "bg-slate-100 text-slate-800 ring-1 ring-slate-200";
+  }
+}
+
+export function CalendarLegend() {
+  const items = [
+    { label: "Confirmed", tone: "bg-teal-100 ring-teal-200" },
+    { label: "Checked in", tone: "bg-emerald-200 ring-emerald-300" },
+    { label: "Checked out", tone: "bg-slate-200 ring-slate-300" },
+    { label: "Pending", tone: "bg-amber-100 ring-amber-200" },
   ];
+  return (
+    <div className="flex flex-wrap items-center gap-3 text-xs text-slate-600">
+      {items.map((item) => (
+        <span key={item.label} className="inline-flex items-center gap-2">
+          <span className={`inline-block h-3 w-5 rounded-sm ring-1 ${item.tone}`} />
+          {item.label}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+export function CalendarGrid({
+  bookings,
+  rooms,
+  start,
+  days: dayCount = 14,
+}: {
+  bookings: Booking[];
+  rooms: Room[];
+  start?: string;
+  days?: number;
+}) {
+  const startDate = start ? new Date(`${start}T00:00:00Z`) : new Date();
+  if (!start) startDate.setHours(0, 0, 0, 0);
+
+  const days = Array.from({ length: dayCount }, (_, i) => {
+    const d = new Date(startDate);
+    d.setUTCDate(d.getUTCDate() + i);
+    const iso = d.toISOString().slice(0, 10);
+    const label = `${String(d.getUTCDate()).padStart(2, "0")}.${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+    return { iso, label };
+  });
   const visibleBookings = bookings.filter((booking) => !["cancelled", "no_show"].includes(booking.status));
 
   return (
     <div className="overflow-auto rounded-lg border border-slate-200 bg-white shadow-sm">
-      <div className="grid min-w-[840px]" style={{ gridTemplateColumns: `150px repeat(${days.length}, minmax(92px, 1fr))` }}>
+      <div className="grid min-w-[1100px]" style={{ gridTemplateColumns: `150px repeat(${days.length}, minmax(80px, 1fr))` }}>
         <div className="border-b border-slate-100 bg-slate-50 p-3 text-xs font-semibold uppercase text-slate-500">Room</div>
         {days.map((day) => (
           <div key={day.iso} className="border-b border-l border-slate-100 bg-slate-50 p-3 text-xs font-semibold uppercase text-slate-500">{day.label}</div>
@@ -111,9 +156,13 @@ export function CalendarGrid({ bookings, rooms }: { bookings: Booking[]; rooms: 
               return (
                 <div key={`${room.id}-${day.iso}`} className="min-h-16 border-b border-l border-slate-100 p-2">
                   {booking ? (
-                    <div className="rounded-md bg-teal-100 px-2 py-1 text-xs font-semibold leading-5 text-teal-800">
-                      {booking.bookingRef} · {roomTypeName(booking.roomTypeId)}
-                    </div>
+                    <a
+                      href={`/admin/bookings/${booking.id}`}
+                      className={`block rounded-md px-2 py-1 text-xs font-semibold leading-5 transition hover:opacity-90 ${calendarBlockTone(booking.status)}`}
+                      title={`${booking.bookingRef} (${booking.status})`}
+                    >
+                      {booking.bookingRef}
+                    </a>
                   ) : null}
                 </div>
               );
