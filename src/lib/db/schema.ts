@@ -1,0 +1,76 @@
+import {
+  boolean,
+  date,
+  integer,
+  jsonb,
+  pgTable,
+  text,
+  time,
+  timestamp,
+  uuid,
+} from "drizzle-orm/pg-core";
+
+export const properties = pgTable("properties", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
+  address: text("address"),
+  city: text("city"),
+  postalCode: text("postal_code"),
+  country: text("country").default("NO"),
+  timezone: text("timezone").default("Europe/Oslo"),
+  currency: text("currency").default("NOK"),
+  logoUrl: text("logo_url"),
+  primaryColor: text("primary_color").default("#0D9488"),
+  accentColor: text("accent_color").default("#F59E0B"),
+  contactEmail: text("contact_email").notNull(),
+  contactPhone: text("contact_phone"),
+  bookingRefPrefix: text("booking_ref_prefix").default("GH"),
+  checkInTime: time("check_in_time").default("15:00"),
+  checkOutTime: time("check_out_time").default("11:00"),
+  cancellationInfo: jsonb("cancellation_info"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+});
+
+export const roomTypes = pgTable("room_types", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  propertyId: uuid("property_id").notNull().references(() => properties.id, { onDelete: "cascade" }),
+  name: jsonb("name").notNull(),
+  description: jsonb("description"),
+  slug: text("slug").notNull(),
+  hasBathroom: boolean("has_bathroom").default(false),
+  maxGuests: integer("max_guests").default(2),
+  basePrice: integer("base_price").notNull(),
+  amenities: jsonb("amenities").default([]),
+  photoUrls: text("photo_urls").array().default([]),
+  sortOrder: integer("sort_order").default(0),
+  active: boolean("active").default(true),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+});
+
+export const rooms = pgTable("rooms", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  propertyId: uuid("property_id").notNull().references(() => properties.id, { onDelete: "cascade" }),
+  roomTypeId: uuid("room_type_id").notNull().references(() => roomTypes.id, { onDelete: "cascade" }),
+  roomNumber: text("room_number").notNull(),
+  floor: integer("floor"),
+  notes: text("notes"),
+  active: boolean("active").default(true),
+});
+
+export const pricingRules = pgTable("pricing_rules", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  propertyId: uuid("property_id").notNull().references(() => properties.id, { onDelete: "cascade" }),
+  roomTypeId: uuid("room_type_id").references(() => roomTypes.id, { onDelete: "set null" }),
+  name: text("name").notNull(),
+  ruleType: text("rule_type").notNull(),
+  priceOverride: integer("price_override"),
+  modifierPct: integer("modifier_pct"),
+  startDate: date("start_date"),
+  endDate: date("end_date"),
+  daysOfWeek: integer("days_of_week").array(),
+  priority: integer("priority").default(0),
+  active: boolean("active").default(true),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+});

@@ -1,0 +1,270 @@
+import type {
+  Booking,
+  CancellationPolicy,
+  CleaningTask,
+  Guest,
+  PricingRule,
+  Property,
+  Room,
+  RoomType,
+} from "@/types";
+
+export const demoProperty: Property = {
+  id: "prop_fjordview",
+  name: "Fjordview Lodge",
+  slug: "fjordview",
+  address: "Eksempelveien 42",
+  city: "Demovik",
+  postalCode: "0000",
+  country: "NO",
+  timezone: "Europe/Oslo",
+  currency: "NOK",
+  contactEmail: "hello@fjordviewlodge.example",
+  contactPhone: "+47 000 00 000",
+  bookingRefPrefix: "FV",
+  checkInTime: "15:00",
+  checkOutTime: "11:00",
+  primaryColor: "#0D9488",
+  accentColor: "#F59E0B",
+  cancellationInfo: {
+    no: "Gratis avbestilling inntil 48 timer før innsjekk.",
+    en: "Free cancellation up to 48 hours before check-in.",
+  },
+};
+
+export const demoRoomTypes: RoomType[] = [
+  {
+    id: "rt_double_ensuite",
+    propertyId: demoProperty.id,
+    name: { no: "Dobbeltrom med eget bad", en: "Double room with private bathroom" },
+    description: {
+      no: "Lyst rom med fjordutsikt, skrivebord og privat bad.",
+      en: "Bright room with fjord view, desk, and private bathroom.",
+    },
+    slug: "double-ensuite",
+    hasBathroom: true,
+    maxGuests: 2,
+    basePrice: 129500,
+    amenities: ["wifi", "tv", "private_bathroom", "towels", "linens", "desk"],
+    photoUrls: [
+      "https://images.unsplash.com/photo-1611892440504-42a792e24d32?auto=format&fit=crop&w=1200&q=80",
+    ],
+    sortOrder: 1,
+    active: true,
+  },
+  {
+    id: "rt_double_shared",
+    propertyId: demoProperty.id,
+    name: { no: "Dobbeltrom uten bad", en: "Double room, shared bathroom" },
+    description: {
+      no: "Komfortabelt dobbeltrom nær felles bad og salong.",
+      en: "Comfortable double room near shared bathroom and lounge.",
+    },
+    slug: "double-shared",
+    hasBathroom: false,
+    maxGuests: 2,
+    basePrice: 89500,
+    amenities: ["wifi", "tv", "shared_bathroom", "towels", "linens"],
+    photoUrls: [
+      "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=1200&q=80",
+    ],
+    sortOrder: 2,
+    active: true,
+  },
+  {
+    id: "rt_single",
+    propertyId: demoProperty.id,
+    name: { no: "Enkeltrom", en: "Single room" },
+    description: {
+      no: "Rolig enkeltrom for korte opphold og arbeidsreiser.",
+      en: "Quiet single room for short stays and work trips.",
+    },
+    slug: "single",
+    hasBathroom: false,
+    maxGuests: 1,
+    basePrice: 69500,
+    amenities: ["wifi", "tv", "shared_bathroom", "towels", "linens"],
+    photoUrls: [
+      "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80",
+    ],
+    sortOrder: 3,
+    active: true,
+  },
+  {
+    id: "rt_family",
+    propertyId: demoProperty.id,
+    name: { no: "Familierom", en: "Family room" },
+    description: {
+      no: "Romslig familierom med privat bad og ekstra senger.",
+      en: "Spacious family room with private bathroom and extra beds.",
+    },
+    slug: "family",
+    hasBathroom: true,
+    maxGuests: 4,
+    basePrice: 179500,
+    amenities: ["wifi", "tv", "private_bathroom", "towels", "linens", "extra_beds"],
+    photoUrls: [
+      "https://images.unsplash.com/photo-1566665797739-1674de7a421a?auto=format&fit=crop&w=1200&q=80",
+    ],
+    sortOrder: 4,
+    active: true,
+  },
+];
+
+export const demoRooms: Room[] = [
+  ["101", "rt_double_ensuite", 1],
+  ["102", "rt_double_ensuite", 1],
+  ["103", "rt_double_ensuite", 1],
+  ["201", "rt_double_shared", 2],
+  ["202", "rt_double_shared", 2],
+  ["203", "rt_double_shared", 2],
+  ["301", "rt_single", 3],
+  ["302", "rt_single", 3],
+  ["401", "rt_family", 1],
+  ["402", "rt_family", 1],
+].map(([roomNumber, roomTypeId, floor]) => ({
+  id: `room_${roomNumber}`,
+  propertyId: demoProperty.id,
+  roomTypeId: String(roomTypeId),
+  roomNumber: String(roomNumber),
+  floor: Number(floor),
+  active: true,
+}));
+
+export const demoPricingRules: PricingRule[] = [
+  {
+    id: "rule_summer",
+    propertyId: demoProperty.id,
+    name: "Summer season",
+    ruleType: "seasonal",
+    modifierPct: 25,
+    startDate: "2026-06-15",
+    endDate: "2026-08-15",
+    priority: 1,
+    active: true,
+  },
+  {
+    id: "rule_weekend",
+    propertyId: demoProperty.id,
+    name: "Weekend surcharge",
+    ruleType: "day_of_week",
+    modifierPct: 15,
+    daysOfWeek: [4, 5],
+    priority: 2,
+    active: true,
+  },
+  {
+    id: "rule_christmas",
+    propertyId: demoProperty.id,
+    name: "Christmas/New Year",
+    ruleType: "seasonal",
+    modifierPct: 30,
+    startDate: "2026-12-20",
+    endDate: "2027-01-02",
+    priority: 3,
+    active: true,
+  },
+];
+
+export const demoCancellationPolicy: CancellationPolicy = {
+  id: "policy_standard",
+  propertyId: demoProperty.id,
+  name: "Standard",
+  description: {
+    no: "Gratis avbestilling inntil 48 timer før innsjekk. Etter fristen belastes hele beløpet.",
+    en: "Free cancellation up to 48 hours before check-in. After the deadline, the full amount is charged.",
+  },
+  refundPct: 100,
+  deadlineHours: 48,
+  isDefault: true,
+  active: true,
+};
+
+export const demoGuests: Guest[] = [
+  {
+    id: "guest_lina",
+    propertyId: demoProperty.id,
+    email: "lina@example.com",
+    firstName: "Lina",
+    lastName: "Hansen",
+    phone: "+47 400 00 001",
+    country: "NO",
+    language: "no",
+    totalBookings: 2,
+    totalSpent: 438500,
+  },
+  {
+    id: "guest_eli",
+    propertyId: demoProperty.id,
+    email: "eli@example.com",
+    firstName: "Eli",
+    lastName: "Berg",
+    phone: "+47 400 00 002",
+    country: "NO",
+    language: "en",
+    totalBookings: 1,
+    totalSpent: 179500,
+  },
+];
+
+export const demoBookings: Booking[] = [
+  {
+    id: "booking_001",
+    propertyId: demoProperty.id,
+    roomId: "room_101",
+    roomTypeId: "rt_double_ensuite",
+    guestId: "guest_lina",
+    bookingRef: "FV-2026-0001",
+    status: "confirmed",
+    checkIn: "2026-06-19",
+    checkOut: "2026-06-22",
+    guestCount: 2,
+    totalPrice: 438500,
+    currency: "NOK",
+    paymentStatus: "fully_paid",
+    paidAmount: 438500,
+    source: "direct",
+    language: "no",
+    createdAt: "2026-05-12T10:00:00.000Z",
+  },
+  {
+    id: "booking_002",
+    propertyId: demoProperty.id,
+    roomId: "room_401",
+    roomTypeId: "rt_family",
+    guestId: "guest_eli",
+    bookingRef: "FV-2026-0002",
+    status: "pending",
+    checkIn: "2026-05-18",
+    checkOut: "2026-05-19",
+    guestCount: 3,
+    totalPrice: 179500,
+    currency: "NOK",
+    paymentStatus: "unpaid",
+    paidAmount: 0,
+    source: "admin",
+    language: "en",
+    createdAt: "2026-05-16T09:30:00.000Z",
+  },
+];
+
+export const demoCleaningTasks: CleaningTask[] = [
+  {
+    id: "clean_001",
+    propertyId: demoProperty.id,
+    roomId: "room_101",
+    bookingId: "booking_001",
+    taskDate: "2026-06-22",
+    status: "pending",
+    assignedTo: "Maja",
+  },
+];
+
+if (require.main === module) {
+  console.log("Demo seed ready", {
+    property: demoProperty.slug,
+    roomTypes: demoRoomTypes.length,
+    rooms: demoRooms.length,
+    bookings: demoBookings.length,
+  });
+}
