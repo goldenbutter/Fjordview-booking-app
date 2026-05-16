@@ -3,6 +3,7 @@
 > **Audience:** any agent (Claude, Codex, OPUS, Sonnet, future) or human collaborator working on this repository.
 > **Status:** authoritative. Conflicts with anything else (CLAUDE.md, AGENTS.md, READMEs) are resolved in this file's favour.
 > **Read this first** before starting any session.
+> **Architectural rationale** for each rule below lives in [`adr/`](adr/) — see [`0001`](adr/0001-multi-agent-coordination-protocol.md) for why this protocol exists, [`0002`](adr/0002-folder-structure-for-reports-and-handoffs.md) for the folder layout, [`0003`](adr/0003-context-budget-self-management.md) for the context-budget rules.
 
 This codebase is worked on by multiple agents and the human owner (Bithun). To avoid duplicate work, silent rewrites, merge collisions, and context-budget cliffs, every agent follows the same protocol.
 

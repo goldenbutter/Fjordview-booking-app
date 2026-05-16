@@ -13,3 +13,9 @@ CLAUDE.md
 
 _docs/verification/*.log
 /.vscode
+
+# Per-agent project-local config (track only the README so the folder's purpose is documented)
+.claude/*
+!.claude/README.md
+.codex/*
+!.codex/README.md
