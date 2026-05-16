@@ -86,7 +86,7 @@
 
 ### 4.2 Documentation produced
 
-- **`_docs/agent-reports/2026-05-16-opus-s01-pending-audit.md`** (431 lines) — full 38-item pending-work breakdown with categorization (user-action prerequisites / P0 / P1 / P2 / P3), Supabase activation playbook with copy-pasteable SQL, dispatch prompt for the next coding session.
+- **`_docs/agent-reports/2026-05-16/opus-s01-pending-audit.md`** (431 lines) — full 38-item pending-work breakdown with categorization (user-action prerequisites / P0 / P1 / P2 / P3), Supabase activation playbook with copy-pasteable SQL, dispatch prompt for the next coding session.
 - **`CLAUDE.md`** at project root — codebase architecture briefing for future Claude Code sessions. Note: `.gitignore` excludes this file, intentionally local.
 - This execution summary (intended to grow append-only as the session continues).
 
@@ -158,8 +158,8 @@ Performed by S01 via scripts:
 ## 6. Files added or modified this session (cumulative)
 
 ### Added
-- `_docs/agent-reports/2026-05-16-opus-s01-pending-audit.md`
-- `_docs/agent-reports/2026-05-16-opus-s01-execution-summary.md` (this file)
+- `_docs/agent-reports/2026-05-16/opus-s01-pending-audit.md`
+- `_docs/agent-reports/2026-05-16/opus-s01-execution-summary.md` (this file)
 - `scripts/apply-migration.ts`
 - `scripts/reset-db.ts`
 - `scripts/verify-schema.ts`

@@ -392,7 +392,7 @@ No dev server is running. Confirmed via `netstat`-equivalent check via the build
 
 > **Branch:** start a new branch `codex/supabase-wire-phase-1` from `main`.
 >
-> **Read first:** `_docs/_prompt/guesthub-booking-system-dev-prompt.md`, `_docs/review/guesthub-review-2.md`, and `_docs/agent-reports/2026-05-16-opus-s01-pending-audit.md` (this file).
+> **Read first:** `_docs/_prompt/guesthub-booking-system-dev-prompt.md`, `_docs/review/guesthub-review-2.md`, and `_docs/agent-reports/2026-05-16/opus-s01-pending-audit.md` (this file).
 >
 > **Phase goal:** activate Supabase reads/writes for the public booking flow without breaking the local-demo mode. Land §4 P0 items 1, 2, 3 (seed script, availability via Drizzle, rooms via Drizzle) + the matching guest booking POST persistence (subset of P0 #4: write the booking as `pending` to Drizzle, but keep returning the local checkout URL until Stripe wiring lands in the next phase). Defer Stripe Checkout creation, webhook handlers, refund, admin auth join, and admin endpoints to phase 2.
 >
@@ -401,7 +401,7 @@ No dev server is running. Confirmed via `netstat`-equivalent check via the build
 > - With `LOCAL_DEMO_MODE=true` (no DB env vars), the demo must continue to work — `/book/fjordview` lists rooms, search shows availability, "Pay & confirm" produces a local success page.
 > - With `LOCAL_DEMO_MODE=false` and a real `DATABASE_URL`, the same endpoints must return rows from Postgres. Smoke test the availability LATERAL-JOIN query in `psql` against the seeded DB and document the result in your session report.
 >
-> **Commit policy:** one focused commit per file group (seed script; availability route; rooms route; bookings POST). Write `_docs/agent-reports/2026-05-16-codex-supabase-wire-phase-1.md` listing what landed, what was deferred, and verification evidence.
+> **Commit policy:** one focused commit per file group (seed script; availability route; rooms route; bookings POST). Write `_docs/agent-reports/<YYYY-MM-DD>/codex-supabase-wire-phase-1.md` listing what landed, what was deferred, and verification evidence.
 >
 > **Boundaries:**
 > - Do **not** touch the Stripe webhook route, the cancel route, the admin endpoints, or the cron bodies in this phase. Those are phase 2.

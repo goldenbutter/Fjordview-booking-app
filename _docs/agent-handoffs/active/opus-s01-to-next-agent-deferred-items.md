@@ -7,15 +7,15 @@ status: open
 branch_at_handoff: claude/supabase-and-admin-wiring
 read_first:
   - _docs/AGENT-PROTOCOL.md
-  - _docs/agent-reports/2026-05-16-opus-s01-execution-summary.md
-  - _docs/agent-reports/2026-05-16-opus-s01-pending-audit.md
+  - _docs/agent-reports/2026-05-16/opus-s01-execution-summary.md
+  - _docs/agent-reports/2026-05-16/opus-s01-pending-audit.md
 ---
 
 # Handoff — deferred items after Opus S01
 
 ## Context
 
-Session S01 (Opus 4.7, 2026-05-16 16:30–20:28 CEST) completed the Supabase activation, the Drizzle persistence layer, the calendar nav + invoice viewer, and the admin write paths. Full details in `_docs/agent-reports/2026-05-16-opus-s01-execution-summary.md`. Branch `claude/supabase-and-admin-wiring` carries 11 commits ahead of `main` and is ready to PR.
+Session S01 (Opus 4.7, 2026-05-16 16:30–20:28 CEST) completed the Supabase activation, the Drizzle persistence layer, the calendar nav + invoice viewer, and the admin write paths. Full details in `_docs/agent-reports/2026-05-16/opus-s01-execution-summary.md`. Branch `claude/supabase-and-admin-wiring` carries 11 commits ahead of `main` and is ready to PR.
 
 Twelve of nineteen prompt acceptance criteria are now fully met. The five remaining hard fails and two partials are all either provider-key-dependent or pure scope-blocked — none are gated by something Opus S01 could have done alone.
 
