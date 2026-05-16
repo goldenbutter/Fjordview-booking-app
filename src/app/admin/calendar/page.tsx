@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { CalendarGrid } from "@/components/admin/admin-cards";
+import { CalendarGrid, CalendarLegend } from "@/components/admin/admin-cards";
 import { getCalendarData, getPropertyBySlug } from "@/lib/db/queries";
 import { env } from "@/lib/env";
 
@@ -97,6 +97,7 @@ export default async function AdminCalendarPage({
           </form>
         </div>
       </div>
+      <CalendarLegend />
       <CalendarGrid bookings={bookings} rooms={rooms} start={start} days={WINDOW_DAYS} />
     </main>
   );

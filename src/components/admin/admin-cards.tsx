@@ -82,6 +82,40 @@ export function CleaningList({ tasks }: { tasks: AdminCleaningRow[] }) {
   );
 }
 
+function calendarBlockTone(status: string) {
+  switch (status) {
+    case "confirmed":
+      return "bg-teal-100 text-teal-900 ring-1 ring-teal-200";
+    case "checked_in":
+      return "bg-emerald-200 text-emerald-900 ring-1 ring-emerald-300";
+    case "checked_out":
+      return "bg-slate-200 text-slate-800 ring-1 ring-slate-300";
+    case "pending":
+      return "bg-amber-100 text-amber-900 ring-1 ring-amber-200";
+    default:
+      return "bg-slate-100 text-slate-800 ring-1 ring-slate-200";
+  }
+}
+
+export function CalendarLegend() {
+  const items = [
+    { label: "Confirmed", tone: "bg-teal-100 ring-teal-200" },
+    { label: "Checked in", tone: "bg-emerald-200 ring-emerald-300" },
+    { label: "Checked out", tone: "bg-slate-200 ring-slate-300" },
+    { label: "Pending", tone: "bg-amber-100 ring-amber-200" },
+  ];
+  return (
+    <div className="flex flex-wrap items-center gap-3 text-xs text-slate-600">
+      {items.map((item) => (
+        <span key={item.label} className="inline-flex items-center gap-2">
+          <span className={`inline-block h-3 w-5 rounded-sm ring-1 ${item.tone}`} />
+          {item.label}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 export function CalendarGrid({
   bookings,
   rooms,
@@ -122,9 +156,13 @@ export function CalendarGrid({
               return (
                 <div key={`${room.id}-${day.iso}`} className="min-h-16 border-b border-l border-slate-100 p-2">
                   {booking ? (
-                    <div className="rounded-md bg-teal-100 px-2 py-1 text-xs font-semibold leading-5 text-teal-800">
+                    <a
+                      href={`/admin/bookings/${booking.id}`}
+                      className={`block rounded-md px-2 py-1 text-xs font-semibold leading-5 transition hover:opacity-90 ${calendarBlockTone(booking.status)}`}
+                      title={`${booking.bookingRef} (${booking.status})`}
+                    >
                       {booking.bookingRef}
-                    </div>
+                    </a>
                   ) : null}
                 </div>
               );

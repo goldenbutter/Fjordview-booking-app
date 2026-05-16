@@ -655,6 +655,173 @@ export async function getAdminSnapshotForSlug(slug: string): Promise<AdminSnapsh
   return getAdminSnapshotForProperty(property.id);
 }
 
+// ---- Admin bookings list with filters ----
+
+export type BookingsListFilters = {
+  search?: string;
+  status?: string;
+  roomTypeId?: string;
+  paymentStatus?: string;
+};
+
+export type ListBookingsResult = {
+  bookings: AdminBookingRow[];
+  totalCount: number;
+};
+
+export async function listBookings(propertyId: string, filters: BookingsListFilters): Promise<ListBookingsResult> {
+  const db = getDb();
+  const conditions = [eq(schema.bookings.propertyId, propertyId)];
+  if (filters.status) conditions.push(eq(schema.bookings.status, filters.status));
+  if (filters.roomTypeId) conditions.push(eq(schema.bookings.roomTypeId, filters.roomTypeId));
+  if (filters.paymentStatus) conditions.push(eq(schema.bookings.paymentStatus, filters.paymentStatus));
+
+  const baseRows = await db
+    .select()
+    .from(schema.bookings)
+    .where(and(...conditions))
+    .orderBy(desc(schema.bookings.createdAt));
+
+  const guestsRows = await db.select().from(schema.guests).where(eq(schema.guests.propertyId, propertyId));
+  const roomsRows = await db.select().from(schema.rooms).where(eq(schema.rooms.propertyId, propertyId));
+  const roomTypesRows = await db.select().from(schema.roomTypes).where(eq(schema.roomTypes.propertyId, propertyId));
+
+  const guests = guestsRows.map(mapGuest);
+  const rooms = roomsRows.map(mapRoom);
+  const roomTypes = roomTypesRows.map(mapRoomType);
+
+  let enriched = baseRows.map((row) => enrichBooking(mapBooking(row), guests, rooms, roomTypes));
+
+  if (filters.search) {
+    const needle = filters.search.toLowerCase();
+    enriched = enriched.filter((b) => {
+      const guest = guests.find((g) => g.id === b.guestId);
+      return (
+        b.bookingRef.toLowerCase().includes(needle) ||
+        b.guestName.toLowerCase().includes(needle) ||
+        (guest?.email.toLowerCase().includes(needle) ?? false)
+      );
+    });
+  }
+
+  return { bookings: enriched, totalCount: enriched.length };
+}
+
+// ---- Booking detail (admin) ----
+
+export async function getBookingDetail(bookingId: string) {
+  const db = getDb();
+  const bookingRows = await db.select().from(schema.bookings).where(eq(schema.bookings.id, bookingId)).limit(1);
+  if (bookingRows.length === 0) return null;
+  return getBookingByRef(bookingRows[0].bookingRef);
+}
+
+// ---- Admin booking create (manual / walk-in) ----
+
+export type CreateAdminBookingInput = CreateBookingInput & {
+  paymentStatus?: PaymentStatus;
+  paidAmount?: number;
+};
+
+export async function createAdminBooking(input: CreateAdminBookingInput): Promise<CreateBookingResult> {
+  // For manual bookings we reuse the same transactional helper, then override payment status if needed.
+  const result = await createBooking({
+    ...input,
+    guest: input.guest,
+  });
+  if (input.paymentStatus && input.paymentStatus !== "fully_paid") {
+    const db = getDb();
+    await db
+      .update(schema.bookings)
+      .set({
+        paymentStatus: input.paymentStatus,
+        paidAmount: input.paidAmount ?? 0,
+        source: "admin",
+      })
+      .where(eq(schema.bookings.id, result.booking.id));
+    return {
+      ...result,
+      booking: { ...result.booking, paymentStatus: input.paymentStatus, paidAmount: input.paidAmount ?? 0, source: "admin" },
+    };
+  }
+  // Fully-paid manual bookings still flagged as source=admin
+  const db = getDb();
+  await db.update(schema.bookings).set({ source: "admin" }).where(eq(schema.bookings.id, result.booking.id));
+  return { ...result, booking: { ...result.booking, source: "admin" } };
+}
+
+// ---- Cleaning task status update ----
+
+export async function updateCleaningTaskStatus(
+  taskId: string,
+  status: "pending" | "in_progress" | "completed",
+) {
+  const db = getDb();
+  const [updated] = await db
+    .update(schema.cleaningTasks)
+    .set({
+      status,
+      completedAt: status === "completed" ? new Date() : null,
+    })
+    .where(eq(schema.cleaningTasks.id, taskId))
+    .returning();
+  return updated ? mapCleaningTask(updated) : null;
+}
+
+// ---- Property update (admin settings) ----
+
+export type UpdatePropertyInput = Partial<{
+  name: string;
+  address: string;
+  city: string;
+  postalCode: string;
+  contactEmail: string;
+  contactPhone: string;
+  checkInTime: string;
+  checkOutTime: string;
+  primaryColor: string;
+  accentColor: string;
+}>;
+
+export async function updateProperty(propertyId: string, input: UpdatePropertyInput) {
+  const db = getDb();
+  const [updated] = await db
+    .update(schema.properties)
+    .set({ ...input, updatedAt: new Date() })
+    .where(eq(schema.properties.id, propertyId))
+    .returning();
+  return updated ? mapProperty(updated) : null;
+}
+
+// ---- Guest detail with bookings ----
+
+export async function getGuestById(propertyId: string, guestId: string) {
+  const db = getDb();
+  const rows = await db
+    .select()
+    .from(schema.guests)
+    .where(and(eq(schema.guests.propertyId, propertyId), eq(schema.guests.id, guestId)))
+    .limit(1);
+  if (rows.length === 0) return null;
+  const guest = mapGuest(rows[0]);
+
+  const bookingsRows = await db
+    .select()
+    .from(schema.bookings)
+    .where(and(eq(schema.bookings.propertyId, propertyId), eq(schema.bookings.guestId, guestId)))
+    .orderBy(desc(schema.bookings.createdAt));
+
+  const roomsRows = await db.select().from(schema.rooms).where(eq(schema.rooms.propertyId, propertyId));
+  const roomTypesRows = await db.select().from(schema.roomTypes).where(eq(schema.roomTypes.propertyId, propertyId));
+
+  const rooms = roomsRows.map(mapRoom);
+  const roomTypes = roomTypesRows.map(mapRoomType);
+
+  const bookings = bookingsRows.map((row) => enrichBooking(mapBooking(row), [guest], rooms, roomTypes));
+
+  return { guest, bookings };
+}
+
 // ---- Calendar (admin) ----
 
 export async function getCalendarData(propertyId: string, start: string, end: string) {
