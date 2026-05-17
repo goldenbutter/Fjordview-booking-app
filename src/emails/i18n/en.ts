@@ -9,6 +9,7 @@ export const en: EmailCopy = {
     cancellation: (ref) => `Cancellation confirmation - ${ref}`,
     invoice: (ref) => `Invoice - ${ref}`,
     admin_notification: (ref) => `New booking - ${ref}`,
+    admin_cancellation: (ref) => `Booking cancelled - ${ref}`,
   },
   preview: {
     confirmation: "Your booking is confirmed.",
@@ -18,6 +19,7 @@ export const en: EmailCopy = {
     cancellation: "Your booking has been cancelled.",
     invoice: "Your invoice is attached below.",
     admin_notification: "A new booking has been paid and confirmed.",
+    admin_cancellation: "A guest booking has been cancelled.",
   },
   intro: {
     confirmation: "Thank you for booking with us. Your stay is confirmed.",
@@ -27,6 +29,7 @@ export const en: EmailCopy = {
     cancellation: "Your booking has been cancelled according to the cancellation policy.",
     invoice: "Here are the invoice details for your booking.",
     admin_notification: "A guest has completed payment and the booking is now confirmed.",
+    admin_cancellation: "A guest has cancelled a booking. The room has been released in the booking system.",
   },
   labels: {
     bookingRef: "Booking reference",

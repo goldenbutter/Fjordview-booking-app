@@ -118,6 +118,21 @@ describe("email send helpers", () => {
     assert.equal(message.log.language, "en");
   });
 
+  it("routes admin cancellation notifications to the property contact email", () => {
+    const message = buildEmailSendInput({
+      ...payload,
+      booking: { ...booking, language: "en" },
+      type: "admin_cancellation",
+      emailFrom: "onboarding@resend.dev",
+    });
+
+    assert.equal(message.send.to, "host@example.com");
+    assert.equal(message.send.subject, "Booking cancelled - FV-2026-0009");
+    assert.equal(message.log.emailType, "admin_cancellation");
+    assert.equal(message.log.toEmail, "host@example.com");
+    assert.equal(message.idempotencyKey, "email-admin_cancellation-booking-1");
+  });
+
   it("logs local-demo sends when RESEND_API_KEY is absent", async () => {
     let logged: unknown;
     const result = await sendEmail(

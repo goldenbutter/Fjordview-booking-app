@@ -62,13 +62,14 @@ const templateByType: Record<EmailType, (props: EmailTemplateProps) => ReactElem
   cancellation: CancellationConfirmationEmail,
   invoice: InvoiceEmail,
   admin_notification: AdminNotificationEmail,
+  admin_cancellation: AdminNotificationEmail,
 };
 
 export function buildEmailSendInput(input: BuildEmailInput) {
   const type = normalizeEmailType(input.type);
   const language = input.booking.language;
   const copy = getEmailCopy(language);
-  const recipient = type === "admin_notification" ? input.property.contactEmail : input.guest.email;
+  const recipient = isAdminEmailType(type) ? input.property.contactEmail : input.guest.email;
   const subject = copy.subjects[type](input.booking.bookingRef);
   const templateProps: EmailTemplateProps = { ...input, language };
 
@@ -91,6 +92,10 @@ export function buildEmailSendInput(input: BuildEmailInput) {
     },
     idempotencyKey: `email-${type}-${input.booking.id}`,
   };
+}
+
+function isAdminEmailType(type: EmailType) {
+  return type === "admin_notification" || type === "admin_cancellation";
 }
 
 export async function sendEmail(payload: EmailPayload, deps: EmailSendDeps = {}) {

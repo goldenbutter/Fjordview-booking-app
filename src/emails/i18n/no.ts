@@ -9,6 +9,7 @@ export const no: EmailCopy = {
     cancellation: (ref) => `Avbestillingsbekreftelse - ${ref}`,
     invoice: (ref) => `Faktura - ${ref}`,
     admin_notification: (ref) => `Ny booking - ${ref}`,
+    admin_cancellation: (ref) => `Booking avbestilt - ${ref}`,
   },
   preview: {
     confirmation: "Bookingen din er bekreftet.",
@@ -18,6 +19,7 @@ export const no: EmailCopy = {
     cancellation: "Bookingen din er avbestilt.",
     invoice: "Fakturadetaljene er klare.",
     admin_notification: "En ny booking er betalt og bekreftet.",
+    admin_cancellation: "En gjestebooking er avbestilt.",
   },
   intro: {
     confirmation: "Takk for bookingen. Oppholdet ditt er bekreftet.",
@@ -27,6 +29,7 @@ export const no: EmailCopy = {
     cancellation: "Bookingen din er avbestilt i tråd med avbestillingsvilkårene.",
     invoice: "Her er fakturadetaljene for bookingen din.",
     admin_notification: "En gjest har fullført betaling, og bookingen er nå bekreftet.",
+    admin_cancellation: "En gjest har avbestilt en booking. Rommet er frigitt i bookingsystemet.",
   },
   labels: {
     bookingRef: "Bookingreferanse",

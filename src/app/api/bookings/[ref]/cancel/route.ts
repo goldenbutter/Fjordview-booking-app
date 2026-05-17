@@ -53,7 +53,10 @@ export async function POST(
   const detail = await getBookingByRef(result.booking.bookingRef, parsed.data.email);
   if (detail) {
     const selfServiceUrl = `${env.appUrl}/booking/${encodeURIComponent(detail.booking.bookingRef)}?email=${encodeURIComponent(detail.guest.email)}`;
-    await sendEmail({ ...detail, selfServiceUrl, type: "cancellation" });
+    await Promise.all([
+      sendEmail({ ...detail, selfServiceUrl, type: "cancellation" }),
+      sendEmail({ ...detail, selfServiceUrl, type: "admin_cancellation" }),
+    ]);
   }
 
   return NextResponse.json({

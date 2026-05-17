@@ -7,7 +7,8 @@ export type EmailType =
   | "thank_you"
   | "cancellation"
   | "invoice"
-  | "admin_notification";
+  | "admin_notification"
+  | "admin_cancellation";
 
 export type EmailTemplateProps = {
   property: Property;

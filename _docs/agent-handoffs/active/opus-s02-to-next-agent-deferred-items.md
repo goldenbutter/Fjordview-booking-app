@@ -142,3 +142,9 @@ Remaining S02 queue: room/physical room CRUD, cron bodies, and second-property m
 ## Live verification update — Codex Resend slice — 2026-05-17T13:52:00+02:00
 
 After Bithun approved using `bithun@ibithun.com`, Codex ran a live Resend smoke on `codex/resend-email-log`: created test booking `FV-2026-0009`, sent confirmation, payment receipt, cancelled the booking, then sent cancellation confirmation. Resend returned sent message IDs for all three emails and `email_log` contains three matching `sent` rows for that booking.
+
+## Follow-up update — Codex Resend slice — 2026-05-17T14:15:00+02:00
+
+Bithun tested booking `FV-2026-0010` from `goldenbutter@gmail.com`. DB evidence: booking is confirmed/fully paid, admin notification to `bithun@ibithun.com` sent successfully, guest confirmation/receipt to `goldenbutter@gmail.com` logged `failed`. Root cause is sender configuration, not route logic: current `EMAIL_FROM=onboarding@resend.dev` can deliver to the Resend account inbox but not arbitrary customer inboxes until a sending domain is verified.
+
+Codex also added owner-side cancellation notification support: cancellation now sends both guest `cancellation` and owner `admin_cancellation`. Verified by red/green tests, full local Node test set (20 pass), lint, build rerun pass, and `npm run db:verify`.

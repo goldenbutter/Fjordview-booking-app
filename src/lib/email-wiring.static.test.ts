@@ -41,5 +41,6 @@ describe("email wiring", () => {
     assert.match(stripeWebhook, /type:\s*"admin_notification"/);
     assert.match(cancelRoute, /sendEmail/);
     assert.match(cancelRoute, /type:\s*"cancellation"/);
+    assert.match(cancelRoute, /type:\s*"admin_cancellation"/);
   });
 });

@@ -64,6 +64,9 @@ I did not intentionally send a live email to a human inbox in this session. The 
 | `npm run db:verify` | Pass; `public.current_property_id() exists: yes` |
 | Local no-network email smoke | Pass; existing booking `FV-2026-0008` produced an `email_log` row with `email_type=confirmation`, `status=sent` |
 | Live Resend smoke to `bithun@ibithun.com` after human approval | Pass; created/cancelled test booking `FV-2026-0009`, sent confirmation (`f4501c80-8c20-4682-bbf6-69781b85eb01`), receipt (`db71e58e-fc6b-4c78-90b0-3dcd9680e972`), and cancellation (`54f8f372-9006-456f-9d88-1cbd539c4378`); all three have `email_log.status=sent` |
+| Human booking smoke `FV-2026-0010` with guest `goldenbutter@gmail.com` | Admin notification to `bithun@ibithun.com` sent (`1b6a0628-cdbf-461e-bac2-e21e71d8a3f2`); guest confirmation/receipt to `goldenbutter@gmail.com` logged `failed`, consistent with `EMAIL_FROM=onboarding@resend.dev` sender restrictions until a domain is verified |
+| Follow-up owner cancellation notification tests | Pass; cancellation route now sends guest `cancellation` and owner `admin_cancellation`; full local Node test set is 20 pass |
+| Follow-up `npm run db:verify` | Pass |
 
 ## End State
 
