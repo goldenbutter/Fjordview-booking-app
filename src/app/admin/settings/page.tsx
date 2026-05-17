@@ -1,12 +1,12 @@
 import { eq, and } from "drizzle-orm";
 import { getDb } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
-import { env } from "@/lib/env";
-import { getPropertyBySlug } from "@/lib/db/queries";
+import { getCurrentAdminContext } from "@/lib/admin-context";
 import { PropertyForm } from "./property-form";
 
 export default async function AdminSettingsPage() {
-  const property = await getPropertyBySlug(env.defaultPropertySlug);
+  const context = await getCurrentAdminContext();
+  const property = context?.property;
   if (!property) {
     return (
       <main className="space-y-5 p-5">

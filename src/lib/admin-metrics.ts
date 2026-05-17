@@ -1,13 +1,14 @@
-import { env } from "@/lib/env";
 import {
   type AdminBookingRow,
   type AdminCleaningRow,
   type AdminSnapshot,
-  getAdminSnapshotForSlug,
+  getAdminSnapshotForProperty,
 } from "@/lib/db/queries";
+import { getCurrentAdminContext } from "@/lib/admin-context";
 
 export type { AdminBookingRow, AdminCleaningRow, AdminSnapshot };
 
 export async function getAdminSnapshot(): Promise<AdminSnapshot | null> {
-  return getAdminSnapshotForSlug(env.defaultPropertySlug);
+  const context = await getCurrentAdminContext();
+  return context ? getAdminSnapshotForProperty(context.property.id) : null;
 }

@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { dateStringSchema, validationError } from "@/lib/api-validation";
-import { getCalendarData, getPropertyBySlug } from "@/lib/db/queries";
-import { env } from "@/lib/env";
+import { getCurrentAdminContext } from "@/lib/admin-context";
+import { getCalendarData } from "@/lib/db/queries";
 
 const calendarQuerySchema = z
   .object({
@@ -36,7 +36,8 @@ export async function GET(request: Request) {
   }
   const { start, end } = parsedQuery.data;
 
-  const property = await getPropertyBySlug(env.defaultPropertySlug);
+  const context = await getCurrentAdminContext();
+  const property = context?.property;
   if (!property) {
     return NextResponse.json({ error: "Property not found" }, { status: 404 });
   }

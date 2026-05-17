@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { getPropertyBySlug, updateProperty } from "@/lib/db/queries";
-import { env } from "@/lib/env";
+import { getCurrentAdminContext } from "@/lib/admin-context";
+import { updateProperty } from "@/lib/db/queries";
 
 const schema = z.object({
   name: z.string().min(1).optional(),
@@ -17,7 +17,8 @@ const schema = z.object({
 });
 
 export async function PATCH(request: Request) {
-  const property = await getPropertyBySlug(env.defaultPropertySlug);
+  const context = await getCurrentAdminContext();
+  const property = context?.property;
   if (!property) {
     return NextResponse.json({ error: "Property not found" }, { status: 404 });
   }

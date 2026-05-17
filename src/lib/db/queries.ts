@@ -30,6 +30,7 @@ type GuestRow = typeof schema.guests.$inferSelect;
 type BookingRow = typeof schema.bookings.$inferSelect;
 type CleaningTaskRow = typeof schema.cleaningTasks.$inferSelect;
 type CancellationPolicyRow = typeof schema.cancellationPolicies.$inferSelect;
+type AdminUserRow = typeof schema.adminUsers.$inferSelect;
 
 function mapProperty(row: PropertyRow): Property {
   return {
@@ -164,12 +165,55 @@ function mapCancellationPolicy(row: CancellationPolicyRow): CancellationPolicy {
   };
 }
 
+export type AdminUser = {
+  id: string;
+  propertyId: string;
+  supabaseUserId: string;
+  email: string;
+  name: string;
+  role: "owner" | "manager" | "staff";
+  active: boolean;
+};
+
+function mapAdminUser(row: AdminUserRow): AdminUser {
+  return {
+    id: row.id,
+    propertyId: row.propertyId,
+    supabaseUserId: row.supabaseUserId,
+    email: row.email,
+    name: row.name,
+    role: (row.role as AdminUser["role"]) ?? "staff",
+    active: row.active ?? true,
+  };
+}
+
 // ---- Property + room lookups ----
 
 export async function getPropertyBySlug(slug: string): Promise<Property | null> {
   const db = getDb();
   const rows = await db.select().from(schema.properties).where(eq(schema.properties.slug, slug)).limit(1);
   return rows[0] ? mapProperty(rows[0]) : null;
+}
+
+export async function getPropertyById(propertyId: string): Promise<Property | null> {
+  const db = getDb();
+  const rows = await db.select().from(schema.properties).where(eq(schema.properties.id, propertyId)).limit(1);
+  return rows[0] ? mapProperty(rows[0]) : null;
+}
+
+export async function getActiveAdminUserBySupabaseUserId(supabaseUserId: string): Promise<AdminUser | null> {
+  const db = getDb();
+  const rows = await db
+    .select()
+    .from(schema.adminUsers)
+    .where(
+      and(
+        eq(schema.adminUsers.supabaseUserId, supabaseUserId),
+        eq(schema.adminUsers.active, true),
+      ),
+    )
+    .limit(1);
+  return rows[0] ? mapAdminUser(rows[0]) : null;
 }
 
 export async function getActiveRoomTypes(propertyId: string): Promise<RoomType[]> {
@@ -745,6 +789,14 @@ export async function getBookingDetail(idOrRef: string) {
     return getBookingByRef(bookingRows[0].bookingRef);
   }
   return getBookingByRef(idOrRef);
+}
+
+export async function getBookingDetailForProperty(propertyId: string, idOrRef: string) {
+  const detail = await getBookingDetail(idOrRef);
+  if (!detail || detail.booking.propertyId !== propertyId) {
+    return null;
+  }
+  return detail;
 }
 
 // ---- Admin booking create (manual / walk-in) ----

@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { CalendarGrid, CalendarLegend } from "@/components/admin/admin-cards";
-import { getCalendarData, getPropertyBySlug } from "@/lib/db/queries";
-import { env } from "@/lib/env";
+import { getCurrentAdminContext } from "@/lib/admin-context";
+import { getCalendarData } from "@/lib/db/queries";
 
 const WINDOW_DAYS = 14;
 
@@ -40,7 +40,8 @@ export default async function AdminCalendarPage({
   const start = isValidIso(query.start) ? query.start : todayIso();
   const end = shiftIso(start, WINDOW_DAYS);
 
-  const property = await getPropertyBySlug(env.defaultPropertySlug);
+  const context = await getCurrentAdminContext();
+  const property = context?.property;
   if (!property) {
     return (
       <main className="space-y-5 p-5">

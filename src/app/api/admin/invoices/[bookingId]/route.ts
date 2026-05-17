@@ -1,12 +1,17 @@
 import { NextResponse } from "next/server";
+import { getCurrentAdminContext } from "@/lib/admin-context";
 import { createInvoiceText } from "@/lib/invoice";
-import { getBookingDetail } from "@/lib/db/queries";
+import { getBookingDetailForProperty } from "@/lib/db/queries";
 
 async function invoiceResponse(params: Promise<{ bookingId: string }>) {
   const { bookingId } = await params;
 
   // Accepts either a UUID id or a booking ref for convenience.
-  const result = await getBookingDetail(bookingId);
+  const context = await getCurrentAdminContext();
+  if (!context) {
+    return NextResponse.json({ error: "Admin property not available" }, { status: 401 });
+  }
+  const result = await getBookingDetailForProperty(context.property.id, bookingId);
   if (!result) {
     return NextResponse.json({ error: "Booking not found" }, { status: 404 });
   }

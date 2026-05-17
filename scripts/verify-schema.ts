@@ -26,9 +26,9 @@ async function main() {
   for (const i of indexes) console.log(`  ${i.indexname}`);
 
   const fn = await sql<{ proname: string }[]>`
-    SELECT proname FROM pg_proc WHERE proname = 'property_id' AND pronamespace = 'auth'::regnamespace
+    SELECT proname FROM pg_proc WHERE proname = 'current_property_id' AND pronamespace = 'public'::regnamespace
   `;
-  console.log(`\nauth.property_id() exists: ${fn.length === 1 ? "yes" : "NO"}`);
+  console.log(`\npublic.current_property_id() exists: ${fn.length === 1 ? "yes" : "NO"}`);
 
   const migrations = await sql<{ hash: string; created_at: string }[]>`
     SELECT hash, created_at FROM drizzle.__drizzle_migrations ORDER BY id

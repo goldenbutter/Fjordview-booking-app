@@ -3,8 +3,8 @@ import { Plus, Search, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { TextInput } from "@/components/ui/field";
-import { getActiveRoomTypes, getPropertyBySlug, listBookings } from "@/lib/db/queries";
-import { env } from "@/lib/env";
+import { getCurrentAdminContext } from "@/lib/admin-context";
+import { getActiveRoomTypes, listBookings } from "@/lib/db/queries";
 import {
   bookingStatusTone,
   formatCurrency,
@@ -27,7 +27,8 @@ export default async function AdminBookingsPage({
   }>;
 }) {
   const query = await searchParams;
-  const property = await getPropertyBySlug(env.defaultPropertySlug);
+  const context = await getCurrentAdminContext();
+  const property = context?.property;
   if (!property) {
     return (
       <main className="space-y-5 p-5">

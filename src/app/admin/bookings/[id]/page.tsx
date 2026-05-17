@@ -2,7 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, FileText, Mail, Phone, Receipt } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { getBookingDetail } from "@/lib/db/queries";
+import { getCurrentAdminContext } from "@/lib/admin-context";
+import { getBookingDetailForProperty } from "@/lib/db/queries";
 import {
   bookingStatusTone,
   formatCurrency,
@@ -15,7 +16,9 @@ import { CancelBookingButton } from "./cancel-button";
 
 export default async function BookingDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const data = await getBookingDetail(id);
+  const context = await getCurrentAdminContext();
+  if (!context) notFound();
+  const data = await getBookingDetailForProperty(context.property.id, id);
   if (!data) notFound();
   const { property, booking, guest, roomType, room } = data;
 

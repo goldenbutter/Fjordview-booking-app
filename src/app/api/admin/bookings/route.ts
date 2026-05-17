@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { createAdminBooking, getAvailability, getPropertyBySlug } from "@/lib/db/queries";
-import { env } from "@/lib/env";
+import { getCurrentAdminContext } from "@/lib/admin-context";
+import { createAdminBooking, getAvailability } from "@/lib/db/queries";
 import { getAdminSnapshot } from "@/lib/admin-metrics";
 
 const schema = z.object({
@@ -32,7 +32,8 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const property = await getPropertyBySlug(env.defaultPropertySlug);
+  const context = await getCurrentAdminContext();
+  const property = context?.property;
   if (!property) {
     return NextResponse.json({ error: "Property not found" }, { status: 404 });
   }

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { getActiveRoomTypes, getPropertyBySlug } from "@/lib/db/queries";
-import { env } from "@/lib/env";
+import { getCurrentAdminContext } from "@/lib/admin-context";
+import { getActiveRoomTypes } from "@/lib/db/queries";
 import { ManualBookingForm } from "./manual-booking-form";
 
 function todayIso() {
@@ -16,7 +16,8 @@ function tomorrowIso() {
 }
 
 export default async function NewBookingPage() {
-  const property = await getPropertyBySlug(env.defaultPropertySlug);
+  const context = await getCurrentAdminContext();
+  const property = context?.property;
   if (!property) {
     return (
       <main className="space-y-5 p-5">

@@ -2,13 +2,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Mail, Phone } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { getGuestById, getPropertyBySlug } from "@/lib/db/queries";
-import { env } from "@/lib/env";
+import { getCurrentAdminContext } from "@/lib/admin-context";
+import { getGuestById } from "@/lib/db/queries";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 export default async function GuestProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const property = await getPropertyBySlug(env.defaultPropertySlug);
+  const context = await getCurrentAdminContext();
+  const property = context?.property;
   if (!property) notFound();
   const result = await getGuestById(property.id, id);
   if (!result) notFound();

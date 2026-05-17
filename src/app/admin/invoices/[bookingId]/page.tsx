@@ -3,9 +3,10 @@ import { notFound } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { ArrowLeft, FileJson } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { getCurrentAdminContext } from "@/lib/admin-context";
 import { getDb } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
-import { getBookingDetail } from "@/lib/db/queries";
+import { getBookingDetailForProperty } from "@/lib/db/queries";
 import { calculateStayPrice } from "@/lib/pricing";
 import { formatCurrency, formatDate, humanizeEnum, nightsBetween } from "@/lib/utils";
 import { PrintButton } from "./print-button";
@@ -20,7 +21,9 @@ export default async function InvoiceDetailPage({
 }) {
   const { bookingId } = await params;
 
-  const data = await getBookingDetail(bookingId);
+  const context = await getCurrentAdminContext();
+  if (!context) notFound();
+  const data = await getBookingDetailForProperty(context.property.id, bookingId);
   if (!data) notFound();
   const { property, booking, guest, roomType, room } = data;
 
