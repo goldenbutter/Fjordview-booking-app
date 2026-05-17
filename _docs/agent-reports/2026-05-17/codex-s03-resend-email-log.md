@@ -68,6 +68,7 @@ I did not intentionally send a live email to a human inbox in this session. The 
 | Follow-up owner cancellation notification tests | Pass; cancellation route now sends guest `cancellation` and owner `admin_cancellation`; full local Node test set is 20 pass |
 | Follow-up `npm run db:verify` | Pass |
 | Invoice PDF attachment follow-up | Pass; payment receipt/invoice emails now attach `invoice-<booking-ref>.pdf`; full local Node test set is 22 pass, lint pass, build pass |
+| Professional invoice PDF follow-up | Pass; replaced the plain prototype PDF with an admin-style invoice PDF layout: branded header, billed-to/stay sections, line items, VAT, payment status, cancellation/footer; full local Node test set is 22 pass, lint pass, build pass |
 
 ## End State
 

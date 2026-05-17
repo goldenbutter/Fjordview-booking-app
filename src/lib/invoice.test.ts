@@ -74,9 +74,15 @@ describe("invoice PDF", () => {
     const text = pdf.toString("latin1");
 
     assert.match(text, /^%PDF-1\.4/);
-    assert.match(text, /Invoice - FV-2026-0009/);
+    assert.match(text, /INVOICE/);
+    assert.match(text, /FV-2026-0009/);
+    assert.match(text, /BILLED TO/);
+    assert.match(text, /STAY/);
+    assert.match(text, /PAYMENT STATUS/);
+    assert.match(text, /VAT .*MVA.* 12%/);
     assert.match(text, /Ada Nord/);
     assert.match(text, /Fjord Suite/);
+    assert.doesNotMatch(text, /Prototype invoice text/);
     assert.match(text, /%%EOF\s*$/);
   });
 });

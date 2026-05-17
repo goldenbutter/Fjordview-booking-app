@@ -152,3 +152,7 @@ Codex also added owner-side cancellation notification support: cancellation now 
 ## Follow-up update — Codex invoice attachment — 2026-05-17T14:32:00+02:00
 
 After Bithun confirmed guest/owner delivery works with verified `ibithun.com`, Codex added invoice PDF attachment support for payment receipt/invoice emails. The implementation generates a simple PDF invoice from booking/property/guest/room details and sends it as `invoice-<booking-ref>.pdf` through Resend attachments. Verified with red/green tests, full local Node test set (22 pass), lint, and build.
+
+## Follow-up update — Codex professional invoice PDF — 2026-05-17T14:46:00+02:00
+
+Bithun rejected the first receipt PDF as too plain. Codex replaced it with a professional admin-style invoice PDF layout using the same booking data: branded header, invoice reference, issued date, billed-to details, stay details, line items, VAT summary, total, payment status, cancellation text, and footer. Verified with red/green tests, full local Node test set (22 pass), lint, and build.
