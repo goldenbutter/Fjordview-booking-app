@@ -130,3 +130,11 @@ Remaining S02 queue: Stripe, Resend/templates/email log, room/physical room CRUD
 Item 1, Stripe Checkout + webhook handlers + refund call, is implemented on `codex/stripe-checkout-webhooks`. Public booking now starts `pending`/`unpaid`, creates a Stripe Checkout Session, webhook `checkout.session.completed` confirms/marks paid and stores Stripe IDs, `charge.refunded` marks refunded, and cancellation issues a Stripe refund when a PaymentIntent exists. Verified with a real Stripe test Checkout payment (`4242`) and refund against local webhook forwarding.
 
 Remaining S02 queue: Resend/templates/email log, room/physical room CRUD, cron bodies, and second-property multi-tenant verification.
+
+## Progress update — Codex Resend slice — 2026-05-17T13:44:04+02:00
+
+Item 2, Resend email integration + missing templates + `email_log` writes, is implemented on `codex/resend-email-log` at code commit `dc133a3`. The slice adds the full React Email template set, shared parameterized email components, NO/EN copy, Resend/local-demo send helper, `logEmail(...)`, checkout confirmation/receipt/admin-notification sends, and cancellation confirmation sends. Verified with TDD red/green tests, full local Node test set (19 pass), lint, build, DB schema verify, and a no-network DB smoke that wrote an `email_log` row.
+
+Human input still needed for live delivery verification: choose/confirm the recipient inbox for a real booking/cancellation smoke. `.env.local` has a Resend-looking key and `EMAIL_FROM=onboarding@resend.dev`; no live email was intentionally sent during this slice.
+
+Remaining S02 queue: room/physical room CRUD, cron bodies, and second-property multi-tenant verification.
