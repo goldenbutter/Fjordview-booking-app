@@ -1,6 +1,6 @@
-# Codex S02 — Auth-Aware Admin Scoping
+# Codex S05 — Auth-Aware Admin Scoping + Stripe
 
-> **Session:** Codex S02 implementation follow-up  
+> **Session:** Codex S05 implementation follow-up  
 > **Agent:** Codex  
 > **Date:** 2026-05-17  
 > **Active window:** 2026-05-17 02:54-03:07 CEST  
