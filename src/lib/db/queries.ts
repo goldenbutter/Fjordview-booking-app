@@ -32,6 +32,18 @@ type CleaningTaskRow = typeof schema.cleaningTasks.$inferSelect;
 type CancellationPolicyRow = typeof schema.cancellationPolicies.$inferSelect;
 type AdminUserRow = typeof schema.adminUsers.$inferSelect;
 
+export type LogEmailInput = {
+  propertyId: string;
+  bookingId?: string;
+  guestId?: string;
+  emailType: string;
+  toEmail: string;
+  subject: string;
+  language: Locale;
+  status: "sent" | "failed" | "bounced";
+  resendMessageId?: string;
+};
+
 function mapProperty(row: PropertyRow): Property {
   return {
     id: row.id,
@@ -844,6 +856,25 @@ export async function markBookingRefundedByPaymentIntent(stripePaymentIntentId: 
     .where(eq(schema.bookings.stripePaymentIntentId, stripePaymentIntentId))
     .returning();
   return updated ? mapBooking(updated) : null;
+}
+
+export async function logEmail(input: LogEmailInput) {
+  const db = getDb();
+  const [inserted] = await db
+    .insert(schema.emailLog)
+    .values({
+      propertyId: input.propertyId,
+      bookingId: input.bookingId,
+      guestId: input.guestId,
+      emailType: input.emailType,
+      toEmail: input.toEmail,
+      subject: input.subject,
+      language: input.language,
+      status: input.status,
+      resendMessageId: input.resendMessageId,
+    })
+    .returning();
+  return inserted;
 }
 
 // ---- Admin booking create (manual / walk-in) ----

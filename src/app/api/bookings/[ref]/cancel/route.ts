@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { bookingRefSchema, validationError } from "@/lib/api-validation";
-import { cancelBooking } from "@/lib/db/queries";
+import { cancelBooking, getBookingByRef } from "@/lib/db/queries";
+import { env } from "@/lib/env";
+import { sendEmail } from "@/lib/email";
 import { refundPaymentIntent } from "@/lib/stripe";
 
 const schema = z.object({
@@ -48,6 +50,11 @@ export async function POST(
           bookingRef: result.booking.bookingRef,
         })
       : { mode: "local-demo" as const, id: null };
+  const detail = await getBookingByRef(result.booking.bookingRef, parsed.data.email);
+  if (detail) {
+    const selfServiceUrl = `${env.appUrl}/booking/${encodeURIComponent(detail.booking.bookingRef)}?email=${encodeURIComponent(detail.guest.email)}`;
+    await sendEmail({ ...detail, selfServiceUrl, type: "cancellation" });
+  }
 
   return NextResponse.json({
     booking: result.booking,

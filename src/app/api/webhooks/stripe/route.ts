@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import { confirmBookingPayment, markBookingRefundedByPaymentIntent } from "@/lib/db/queries";
+import { confirmBookingPayment, getBookingByRef, markBookingRefundedByPaymentIntent } from "@/lib/db/queries";
+import { env } from "@/lib/env";
+import { sendEmail } from "@/lib/email";
 import {
   constructStripeEvent,
   getCheckoutCompletedUpdate,
@@ -15,7 +17,18 @@ export async function POST(request: Request) {
     if (event.type === "checkout.session.completed") {
       const update = getCheckoutCompletedUpdate(event.data.object);
       if (update) {
-        await confirmBookingPayment(update);
+        const booking = await confirmBookingPayment(update);
+        if (booking) {
+          const detail = await getBookingByRef(booking.bookingRef);
+          if (detail) {
+            const selfServiceUrl = `${env.appUrl}/booking/${encodeURIComponent(detail.booking.bookingRef)}?email=${encodeURIComponent(detail.guest.email)}`;
+            await Promise.all([
+              sendEmail({ ...detail, selfServiceUrl, type: "confirmation" }),
+              sendEmail({ ...detail, selfServiceUrl, type: "receipt" }),
+              sendEmail({ ...detail, selfServiceUrl, type: "admin_notification" }),
+            ]);
+          }
+        }
       }
     }
     if (event.type === "charge.refunded") {

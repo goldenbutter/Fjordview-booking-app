@@ -1,5 +1,49 @@
-export const en = {
-  confirmationSubject: "Booking confirmation",
-  cancellationSubject: "Cancellation confirmation",
-  greeting: "Thank you for booking with us.",
+import type { EmailCopy } from "./index";
+
+export const en: EmailCopy = {
+  subjects: {
+    confirmation: (ref) => `Booking confirmation - ${ref}`,
+    receipt: (ref) => `Payment receipt - ${ref}`,
+    reminder: (ref) => `Your stay is coming up - ${ref}`,
+    thank_you: (ref) => `Thank you for staying with us - ${ref}`,
+    cancellation: (ref) => `Cancellation confirmation - ${ref}`,
+    invoice: (ref) => `Invoice - ${ref}`,
+    admin_notification: (ref) => `New booking - ${ref}`,
+  },
+  preview: {
+    confirmation: "Your booking is confirmed.",
+    receipt: "Your payment receipt is ready.",
+    reminder: "Your arrival is coming up soon.",
+    thank_you: "Thank you for staying with us.",
+    cancellation: "Your booking has been cancelled.",
+    invoice: "Your invoice is attached below.",
+    admin_notification: "A new booking has been paid and confirmed.",
+  },
+  intro: {
+    confirmation: "Thank you for booking with us. Your stay is confirmed.",
+    receipt: "We have received your payment for this booking.",
+    reminder: "We look forward to welcoming you soon.",
+    thank_you: "Thank you for staying with us. We hope to welcome you again.",
+    cancellation: "Your booking has been cancelled according to the cancellation policy.",
+    invoice: "Here are the invoice details for your booking.",
+    admin_notification: "A guest has completed payment and the booking is now confirmed.",
+  },
+  labels: {
+    bookingRef: "Booking reference",
+    guest: "Guest",
+    room: "Room",
+    stay: "Stay",
+    checkIn: "Check-in",
+    checkOut: "Check-out",
+    guests: "Guests",
+    total: "Total",
+    paid: "Paid",
+    selfService: "Self-service link",
+    contact: "Contact",
+  },
+  actions: {
+    viewBooking: "View booking",
+    viewInvoice: "View invoice",
+  },
+  footer: "This email was sent with the details registered for your booking.",
 };
