@@ -1,4 +1,8 @@
-# Codex Supabase Foundation
+# Codex S02 — Supabase Foundation
+
+> **Session:** Codex S02
+> **Date:** 2026-05-16
+> **Branch:** `codex/supabase-foundation`
 
 ## Goal
 

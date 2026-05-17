@@ -1,4 +1,8 @@
-# Codex Review #2 Fixes
+# Codex S02 — Review #2 Fixes
+
+> **Session:** Codex S02
+> **Date:** 2026-05-16
+> **Branch:** `codex/review-2-fixes`
 
 ## Source
 
