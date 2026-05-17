@@ -11,7 +11,7 @@
 | Time (CEST) | Commit | Slice |
 |---|---|---|
 | 2026-05-17 18:46 | `cc5af94` | Accepted S06 professional invoice PDF and archived S06 handoff |
-| 2026-05-17 19:10 | `2809d4b` | Room type CRUD + physical room CRUD |
+| 2026-05-17 19:10 | `2b9e256` | Room type CRUD + physical room CRUD |
 
 ## Slice: S06 Handoff Closure
 
