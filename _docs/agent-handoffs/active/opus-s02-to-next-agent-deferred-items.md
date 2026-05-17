@@ -124,3 +124,9 @@ These are not in the §19 acceptance criteria; pick up whenever it makes sense. 
 Codex picked up the audit-recommended architecture slice before provider-key work. Item 6, auth-aware admin scoping, is implemented in `codex/auth-aware-admin-scoping`: admin pages/API routes now resolve the active property from the signed-in Supabase admin user when `LOCAL_DEMO_MODE=false`, while preserving default-slug demo behavior when `LOCAL_DEMO_MODE=true`. Admin booking and invoice detail views/routes are property-scoped. `scripts/verify-schema.ts` now checks `public.current_property_id()`.
 
 Remaining S02 queue: Stripe, Resend/templates/email log, room/physical room CRUD, cron bodies, and second-property multi-tenant verification.
+
+## Progress update — Codex Stripe slice — 2026-05-17T13:16:14+02:00
+
+Item 1, Stripe Checkout + webhook handlers + refund call, is implemented on `codex/stripe-checkout-webhooks`. Public booking now starts `pending`/`unpaid`, creates a Stripe Checkout Session, webhook `checkout.session.completed` confirms/marks paid and stores Stripe IDs, `charge.refunded` marks refunded, and cancellation issues a Stripe refund when a PaymentIntent exists. Verified with a real Stripe test Checkout payment (`4242`) and refund against local webhook forwarding.
+
+Remaining S02 queue: Resend/templates/email log, room/physical room CRUD, cron bodies, and second-property multi-tenant verification.

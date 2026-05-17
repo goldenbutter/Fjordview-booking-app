@@ -62,3 +62,42 @@ The Opus S02 active handoff remains open. Remaining priority slices:
 5. Multi-tenant verification with a second property/admin user.
 
 Second-property verification was not completed in this session because it requires additional seeded tenant/admin setup beyond the auth-aware code path.
+
+## Slice: Stripe Checkout + Webhooks
+
+> **Continuation window:** 2026-05-17 13:03-13:16 CEST  
+> **Branch:** `codex/stripe-checkout-webhooks`  
+> **Commit:** `59dd9ae`
+
+Implemented Opus S02 priority item 1:
+
+- Public booking creation now records `pending` / `unpaid` / `paidAmount = 0`.
+- Booking creation creates a Stripe hosted Checkout Session when `STRIPE_SECRET_KEY` is present.
+- The booking UI redirects to Stripe Checkout for `mode: "stripe"` and keeps local-demo fallback behavior when Stripe is unavailable.
+- Stripe webhook route verifies real Stripe signatures when `STRIPE_WEBHOOK_SECRET` is present, even in `LOCAL_DEMO_MODE=true`.
+- `checkout.session.completed` confirms the booking, marks it `fully_paid`, stores the Checkout Session ID and PaymentIntent ID, and records the paid amount.
+- `charge.refunded` marks matching bookings refunded by PaymentIntent ID.
+- Self-service cancellation issues a Stripe refund when the booking has a PaymentIntent and a refundable amount.
+
+### Stripe Verification Evidence
+
+| Command / Check | Result |
+|---|---|
+| `npx tsx --test src\lib\stripe-wiring.static.test.ts src\lib\stripe.test.ts` | Pass, 5 tests |
+| `npm run lint` | Pass |
+| `npm run build` | Pass; pre-existing Recharts width/height warning still appears |
+| `npm run db:verify` | Pass |
+| API smoke booking create | Created `FV-2026-0007`, returned `mode=stripe`, `pending/unpaid`, Checkout URL present |
+| Browser Stripe Checkout smoke | Created `FV-2026-0008`, paid with Stripe test card `4242`, redirected to self-service success URL |
+| Webhook state check | `FV-2026-0008` became `confirmed / fully_paid`, stored Checkout Session and PaymentIntent IDs |
+| Cancellation/refund smoke | `FV-2026-0008` cancellation returned `mode=stripe`, refund id present, booking `cancelled / refunded` |
+
+### Stripe Notes
+
+The local Stripe CLI listener must stay running during webhook testing:
+
+```powershell
+stripe listen --forward-to localhost:3000/api/webhooks/stripe
+```
+
+The test smoke left test-mode bookings in the local database: `FV-2026-0007` pending/unpaid and `FV-2026-0008` cancelled/refunded.
