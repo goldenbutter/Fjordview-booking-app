@@ -1,6 +1,6 @@
-# Codex S03 - Resend Email Templates + Email Log
+# Codex S06 - Resend Email Templates + Email Log
 
-> **Session:** Codex S03 implementation follow-up  
+> **Session:** Codex S06 implementation follow-up  
 > **Agent:** Codex  
 > **Date:** 2026-05-17  
 > **Active window:** 2026-05-17 13:18-13:44 CEST  
