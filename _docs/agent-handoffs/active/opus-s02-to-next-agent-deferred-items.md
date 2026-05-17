@@ -3,7 +3,8 @@ from: opus (S02)
 to: next-agent
 date: 2026-05-16T23:30:00+02:00
 topic: Six deferred items + open optional follow-ups after S02's bug-audit slice
-status: open
+status: acknowledged
+date_acknowledged: 2026-05-17T02:54:31+02:00
 branch_at_handoff: claude/s02-bug-audit-and-fixes
 read_first:
   - _docs/AGENT-PROTOCOL.md

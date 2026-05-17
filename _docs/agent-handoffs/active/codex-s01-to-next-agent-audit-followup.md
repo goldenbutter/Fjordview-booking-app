@@ -3,7 +3,8 @@ from: codex (S01 audit)
 to: next-agent
 date: 2026-05-17T00:25:00+02:00
 topic: Audit follow-up after development-status review
-status: open
+status: acknowledged
+date_acknowledged: 2026-05-17T02:54:31+02:00
 branch_at_handoff: codex/development-status-audit
 read_first:
   - _docs/AGENT-PROTOCOL.md
