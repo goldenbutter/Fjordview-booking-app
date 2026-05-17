@@ -63,6 +63,7 @@ I did not intentionally send a live email to a human inbox in this session. The 
 | `npm run build` | Pass; pre-existing Recharts width/height warning still appears |
 | `npm run db:verify` | Pass; `public.current_property_id() exists: yes` |
 | Local no-network email smoke | Pass; existing booking `FV-2026-0008` produced an `email_log` row with `email_type=confirmation`, `status=sent` |
+| Live Resend smoke to `bithun@ibithun.com` after human approval | Pass; created/cancelled test booking `FV-2026-0009`, sent confirmation (`f4501c80-8c20-4682-bbf6-69781b85eb01`), receipt (`db71e58e-fc6b-4c78-90b0-3dcd9680e972`), and cancellation (`54f8f372-9006-456f-9d88-1cbd539c4378`); all three have `email_log.status=sent` |
 
 ## End State
 

@@ -138,3 +138,7 @@ Item 2, Resend email integration + missing templates + `email_log` writes, is im
 Human input still needed for live delivery verification: choose/confirm the recipient inbox for a real booking/cancellation smoke. `.env.local` has a Resend-looking key and `EMAIL_FROM=onboarding@resend.dev`; no live email was intentionally sent during this slice.
 
 Remaining S02 queue: room/physical room CRUD, cron bodies, and second-property multi-tenant verification.
+
+## Live verification update — Codex Resend slice — 2026-05-17T13:52:00+02:00
+
+After Bithun approved using `bithun@ibithun.com`, Codex ran a live Resend smoke on `codex/resend-email-log`: created test booking `FV-2026-0009`, sent confirmation, payment receipt, cancelled the booking, then sent cancellation confirmation. Resend returned sent message IDs for all three emails and `email_log` contains three matching `sent` rows for that booking.
