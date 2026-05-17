@@ -11,6 +11,7 @@ import { PreArrivalReminderEmail } from "@/emails/pre-arrival-reminder";
 import type { EmailTemplateProps, EmailType } from "@/emails/types";
 import { env } from "@/lib/env";
 import { logEmail as writeEmailLog, type LogEmailInput } from "@/lib/db/queries";
+import { createInvoicePdf } from "@/lib/invoice";
 import type { Locale } from "@/types";
 
 type EmailTypeAlias =
@@ -35,6 +36,10 @@ type ResendSendInput = {
   subject: string;
   text: string;
   react: ReactElement;
+  attachments?: {
+    filename: string;
+    content: string;
+  }[];
 };
 
 type ResendLike = {
@@ -80,6 +85,7 @@ export function buildEmailSendInput(input: BuildEmailInput) {
       subject,
       text: buildPlainText(input, type, language),
       react: createElement(templateByType[type], templateProps),
+      attachments: buildAttachments(input, type),
     },
     log: {
       propertyId: input.property.id,
@@ -92,6 +98,18 @@ export function buildEmailSendInput(input: BuildEmailInput) {
     },
     idempotencyKey: `email-${type}-${input.booking.id}`,
   };
+}
+
+function buildAttachments(input: EmailTemplateProps, type: EmailType) {
+  if (type !== "receipt" && type !== "invoice") {
+    return undefined;
+  }
+  return [
+    {
+      filename: `invoice-${input.booking.bookingRef}.pdf`,
+      content: createInvoicePdf(input).toString("base64"),
+    },
+  ];
 }
 
 function isAdminEmailType(type: EmailType) {

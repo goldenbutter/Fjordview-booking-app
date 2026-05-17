@@ -67,6 +67,7 @@ I did not intentionally send a live email to a human inbox in this session. The 
 | Human booking smoke `FV-2026-0010` with guest `goldenbutter@gmail.com` | Admin notification to `bithun@ibithun.com` sent (`1b6a0628-cdbf-461e-bac2-e21e71d8a3f2`); guest confirmation/receipt to `goldenbutter@gmail.com` logged `failed`, consistent with `EMAIL_FROM=onboarding@resend.dev` sender restrictions until a domain is verified |
 | Follow-up owner cancellation notification tests | Pass; cancellation route now sends guest `cancellation` and owner `admin_cancellation`; full local Node test set is 20 pass |
 | Follow-up `npm run db:verify` | Pass |
+| Invoice PDF attachment follow-up | Pass; payment receipt/invoice emails now attach `invoice-<booking-ref>.pdf`; full local Node test set is 22 pass, lint pass, build pass |
 
 ## End State
 

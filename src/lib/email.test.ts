@@ -133,6 +133,18 @@ describe("email send helpers", () => {
     assert.equal(message.idempotencyKey, "email-admin_cancellation-booking-1");
   });
 
+  it("attaches an invoice PDF to payment receipts", () => {
+    const message = buildEmailSendInput({
+      ...payload,
+      type: "receipt",
+      emailFrom: "bithun@ibithun.com",
+    });
+
+    assert.equal(message.send.attachments?.length, 1);
+    assert.equal(message.send.attachments?.[0]?.filename, "invoice-FV-2026-0009.pdf");
+    assert.match(message.send.attachments?.[0]?.content ?? "", /^JVBER/);
+  });
+
   it("logs local-demo sends when RESEND_API_KEY is absent", async () => {
     let logged: unknown;
     const result = await sendEmail(
