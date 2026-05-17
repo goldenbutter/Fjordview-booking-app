@@ -132,6 +132,8 @@ function mapBooking(row: BookingRow): Booking {
     currency: row.currency ?? "NOK",
     paymentStatus: (row.paymentStatus as PaymentStatus) ?? "unpaid",
     paidAmount: row.paidAmount ?? 0,
+    stripePaymentIntentId: row.stripePaymentIntentId ?? undefined,
+    stripeCheckoutSessionId: row.stripeCheckoutSessionId ?? undefined,
     specialRequests: row.specialRequests ?? undefined,
     source: (row.source as Booking["source"]) ?? "direct",
     language: (row.language as Locale) ?? "no",
@@ -797,6 +799,51 @@ export async function getBookingDetailForProperty(propertyId: string, idOrRef: s
     return null;
   }
   return detail;
+}
+
+export async function attachBookingCheckoutSession(bookingId: string, stripeCheckoutSessionId: string) {
+  const db = getDb();
+  const [updated] = await db
+    .update(schema.bookings)
+    .set({ stripeCheckoutSessionId, updatedAt: new Date() })
+    .where(eq(schema.bookings.id, bookingId))
+    .returning();
+  return updated ? mapBooking(updated) : null;
+}
+
+export async function confirmBookingPayment(input: {
+  bookingRef: string;
+  stripeCheckoutSessionId: string;
+  stripePaymentIntentId: string;
+  paidAmount: number;
+}) {
+  const db = getDb();
+  const [updated] = await db
+    .update(schema.bookings)
+    .set({
+      status: "confirmed",
+      paymentStatus: "fully_paid",
+      paidAmount: input.paidAmount,
+      stripeCheckoutSessionId: input.stripeCheckoutSessionId,
+      stripePaymentIntentId: input.stripePaymentIntentId,
+      updatedAt: new Date(),
+    })
+    .where(eq(schema.bookings.bookingRef, input.bookingRef))
+    .returning();
+  return updated ? mapBooking(updated) : null;
+}
+
+export async function markBookingRefundedByPaymentIntent(stripePaymentIntentId: string) {
+  const db = getDb();
+  const [updated] = await db
+    .update(schema.bookings)
+    .set({
+      paymentStatus: "refunded",
+      updatedAt: new Date(),
+    })
+    .where(eq(schema.bookings.stripePaymentIntentId, stripePaymentIntentId))
+    .returning();
+  return updated ? mapBooking(updated) : null;
 }
 
 // ---- Admin booking create (manual / walk-in) ----

@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
-import { constructStripeEvent } from "@/lib/stripe";
+import { confirmBookingPayment, markBookingRefundedByPaymentIntent } from "@/lib/db/queries";
+import {
+  constructStripeEvent,
+  getCheckoutCompletedUpdate,
+  getRefundedPaymentIntentId,
+} from "@/lib/stripe";
 
 export async function POST(request: Request) {
   const body = await request.text();
@@ -7,6 +12,18 @@ export async function POST(request: Request) {
 
   try {
     const event = await constructStripeEvent(body, signature);
+    if (event.type === "checkout.session.completed") {
+      const update = getCheckoutCompletedUpdate(event.data.object);
+      if (update) {
+        await confirmBookingPayment(update);
+      }
+    }
+    if (event.type === "charge.refunded") {
+      const paymentIntentId = getRefundedPaymentIntentId(event.data.object);
+      if (paymentIntentId) {
+        await markBookingRefundedByPaymentIntent(paymentIntentId);
+      }
+    }
     return NextResponse.json({
       received: true,
       eventType: event.type,

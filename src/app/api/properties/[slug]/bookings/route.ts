@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { propertySlugSchema, validationError } from "@/lib/api-validation";
-import { createBooking, getAvailability, getPropertyBySlug } from "@/lib/db/queries";
+import { attachBookingCheckoutSession, createBooking, getAvailability, getPropertyBySlug } from "@/lib/db/queries";
 import { checkRateLimit, rateLimitKey } from "@/lib/rate-limit";
+import { createBookingCheckoutSession } from "@/lib/stripe";
+import { env } from "@/lib/env";
 
 const schema = z.object({
   roomTypeId: z.string().uuid(),
@@ -67,6 +69,9 @@ export async function POST(
       currency: property.currency,
       language: input.guest.language,
       specialRequests: input.specialRequests,
+      status: "pending",
+      paymentStatus: "unpaid",
+      paidAmount: 0,
       guest: {
         firstName: input.guest.firstName,
         lastName: input.guest.lastName,
@@ -75,14 +80,30 @@ export async function POST(
         country: input.guest.country,
       },
     });
+    const checkout = await createBookingCheckoutSession({
+      appUrl: env.appUrl,
+      propertySlug: property.slug,
+      propertyName: property.name,
+      bookingRef: result.booking.bookingRef,
+      bookingId: result.booking.id,
+      propertyId: property.id,
+      roomTypeName: result.roomType.name[input.guest.language] ?? result.roomType.name.en,
+      guestEmail: input.guest.email,
+      totalAmount: roomType.price.subtotal,
+      currency: property.currency,
+    });
+    if (checkout.id) {
+      await attachBookingCheckoutSession(result.booking.id, checkout.id);
+      result.booking.stripeCheckoutSessionId = checkout.id;
+    }
 
     return NextResponse.json({
-      mode: "local-demo",
+      mode: checkout.mode,
       booking: result.booking,
       guest: result.guest,
       roomType: { ...result.roomType, price: roomType.price },
       room: result.room,
-      checkoutUrl: `/booking/${result.booking.bookingRef}?success=true&email=${encodeURIComponent(input.guest.email)}`,
+      checkoutUrl: checkout.url,
     });
   } catch (err) {
     console.error("[bookings.POST]", err);

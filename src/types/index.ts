@@ -105,6 +105,8 @@ export type Booking = {
   currency: string;
   paymentStatus: PaymentStatus;
   paidAmount: number;
+  stripePaymentIntentId?: string;
+  stripeCheckoutSessionId?: string;
   specialRequests?: string;
   source: "direct" | "admin" | "api" | "channel";
   language: Locale;

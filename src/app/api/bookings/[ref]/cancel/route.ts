@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { bookingRefSchema, validationError } from "@/lib/api-validation";
 import { cancelBooking } from "@/lib/db/queries";
+import { refundPaymentIntent } from "@/lib/stripe";
 
 const schema = z.object({
   email: z.string().email(),
@@ -39,11 +40,20 @@ export async function POST(
     };
     return NextResponse.json({ error: result.reason }, { status: statusMap[result.reason] });
   }
+  const refund =
+    result.refundAmount > 0 && result.booking.stripePaymentIntentId
+      ? await refundPaymentIntent({
+          paymentIntentId: result.booking.stripePaymentIntentId,
+          amount: result.refundAmount,
+          bookingRef: result.booking.bookingRef,
+        })
+      : { mode: "local-demo" as const, id: null };
 
   return NextResponse.json({
     booking: result.booking,
     refundAmount: result.refundAmount,
     policy: result.policy,
-    mode: "local-demo",
+    mode: refund.mode,
+    refundId: refund.id,
   });
 }

@@ -17,6 +17,7 @@ type AvailableRoom = RoomType & {
 };
 
 type CreatedBooking = {
+  mode: "stripe" | "local-demo";
   booking: {
     bookingRef: string;
     checkIn: string;
@@ -116,6 +117,10 @@ export function BookingFlow({ property }: { property: Property }) {
       const payload = (await response.json()) as CreatedBooking & { error?: unknown };
       if (!response.ok) {
         throw new Error(typeof payload.error === "string" ? payload.error : "Could not create booking");
+      }
+      if (payload.mode === "stripe" && payload.checkoutUrl) {
+        window.location.href = payload.checkoutUrl;
+        return;
       }
       setCreated(payload);
     } catch (caught) {
@@ -370,10 +375,10 @@ export function BookingFlow({ property }: { property: Property }) {
             <div className="mt-5 rounded-md border border-emerald-200 bg-emerald-50 p-4">
               <div className="flex items-center gap-2 font-semibold text-emerald-800">
                 <CircleCheck className="h-5 w-5" />
-                Booking confirmed
-              </div>
-              <p className="mt-1 text-sm text-emerald-700">
-                Reference {created.booking.bookingRef}. Local demo payment marked as fully paid.
+                  Booking created
+                </div>
+                <p className="mt-1 text-sm text-emerald-700">
+                Reference {created.booking.bookingRef}. Open Checkout to complete payment.
               </p>
               <a className="mt-3 inline-flex text-sm font-semibold text-teal-700" href={created.checkoutUrl}>
                 Open self-service page
