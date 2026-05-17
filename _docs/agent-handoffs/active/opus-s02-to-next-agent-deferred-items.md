@@ -118,3 +118,9 @@ These are not in the §19 acceptance criteria; pick up whenever it makes sense. 
 
 - Which provider keys (Stripe / Resend) is the human ready to provide right now? That determines which slice is unblocked.
 - Should S01's branch be PR'd + merged first, or should each subsequent branch keep stacking on top? Stacking gets harder past two layers.
+
+## Progress update — Codex S02 — 2026-05-17T03:07:02+02:00
+
+Codex picked up the audit-recommended architecture slice before provider-key work. Item 6, auth-aware admin scoping, is implemented in `codex/auth-aware-admin-scoping`: admin pages/API routes now resolve the active property from the signed-in Supabase admin user when `LOCAL_DEMO_MODE=false`, while preserving default-slug demo behavior when `LOCAL_DEMO_MODE=true`. Admin booking and invoice detail views/routes are property-scoped. `scripts/verify-schema.ts` now checks `public.current_property_id()`.
+
+Remaining S02 queue: Stripe, Resend/templates/email log, room/physical room CRUD, cron bodies, and second-property multi-tenant verification.
