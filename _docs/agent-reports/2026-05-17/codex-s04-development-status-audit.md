@@ -1,6 +1,6 @@
-# Codex S05 — Development Status Audit Session
+# Codex S04 — Development Status Audit Session
 
-> **Session:** Codex S05 audit  
+> **Session:** Codex S04 audit  
 > **Agent:** Codex  
 > **Date:** 2026-05-17  
 > **Active window:** 2026-05-17 00:16-00:25 CEST  
@@ -38,8 +38,8 @@ Build note: Next.js build passed but emitted one Recharts width/height warning.
 ## Artifacts Written
 
 - `_docs/audits/2026-05-17-development-status-audit.md`
-- `_docs/agent-reports/2026-05-17/codex-s05-development-status-audit.md`
-- `_docs/agent-handoffs/active/codex-s05-to-next-agent-audit-followup.md`
+- `_docs/agent-reports/2026-05-17/codex-s04-development-status-audit.md`
+- `_docs/agent-handoffs/active/codex-s04-to-next-agent-audit-followup.md`
 
 ## Audit Result
 
