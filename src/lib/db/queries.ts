@@ -240,6 +240,116 @@ export async function getActiveRoomTypes(propertyId: string): Promise<RoomType[]
   return rows.map(mapRoomType);
 }
 
+export type CreateRoomTypeInput = {
+  propertyId: string;
+  name: Record<Locale, string>;
+  description: Record<Locale, string>;
+  slug: string;
+  hasBathroom: boolean;
+  maxGuests: number;
+  basePrice: number;
+  amenities: string[];
+  photoUrls?: string[];
+  sortOrder: number;
+  active: boolean;
+};
+
+export type UpdateRoomTypeInput = Partial<Omit<CreateRoomTypeInput, "propertyId">> & {
+  id: string;
+  propertyId: string;
+};
+
+export async function createRoomType(input: CreateRoomTypeInput): Promise<RoomType> {
+  const db = getDb();
+  const [inserted] = await db
+    .insert(schema.roomTypes)
+    .values({
+      propertyId: input.propertyId,
+      name: input.name,
+      description: input.description,
+      slug: input.slug,
+      hasBathroom: input.hasBathroom,
+      maxGuests: input.maxGuests,
+      basePrice: input.basePrice,
+      amenities: input.amenities,
+      photoUrls: input.photoUrls ?? [],
+      sortOrder: input.sortOrder,
+      active: input.active,
+    })
+    .returning();
+  return mapRoomType(inserted);
+}
+
+export async function updateRoomType(input: UpdateRoomTypeInput): Promise<RoomType | null> {
+  const db = getDb();
+  const { id, propertyId, ...changes } = input;
+  const [updated] = await db
+    .update(schema.roomTypes)
+    .set(changes)
+    .where(and(eq(schema.roomTypes.id, id), eq(schema.roomTypes.propertyId, propertyId)))
+    .returning();
+  return updated ? mapRoomType(updated) : null;
+}
+
+export async function deleteRoomType(propertyId: string, id: string): Promise<RoomType | null> {
+  const db = getDb();
+  const [deleted] = await db
+    .delete(schema.roomTypes)
+    .where(and(eq(schema.roomTypes.id, id), eq(schema.roomTypes.propertyId, propertyId)))
+    .returning();
+  return deleted ? mapRoomType(deleted) : null;
+}
+
+export type CreateRoomInput = {
+  propertyId: string;
+  roomTypeId: string;
+  roomNumber: string;
+  floor: number;
+  notes?: string;
+  active: boolean;
+};
+
+export type UpdateRoomInput = Partial<Omit<CreateRoomInput, "propertyId">> & {
+  id: string;
+  propertyId: string;
+};
+
+export async function createRoom(input: CreateRoomInput): Promise<Room> {
+  const db = getDb();
+  const [inserted] = await db
+    .insert(schema.rooms)
+    .values({
+      propertyId: input.propertyId,
+      roomTypeId: input.roomTypeId,
+      roomNumber: input.roomNumber,
+      floor: input.floor,
+      notes: input.notes,
+      active: input.active,
+    })
+    .returning();
+  return mapRoom(inserted);
+}
+
+export async function updateRoom(input: UpdateRoomInput): Promise<Room | null> {
+  const db = getDb();
+  const { id, propertyId, ...changes } = input;
+  const [updated] = await db
+    .update(schema.rooms)
+    .set(changes)
+    .where(and(eq(schema.rooms.id, id), eq(schema.rooms.propertyId, propertyId)))
+    .returning();
+  return updated ? mapRoom(updated) : null;
+}
+
+export async function deleteRoom(propertyId: string, id: string): Promise<Room | null> {
+  const db = getDb();
+  const [deleted] = await db
+    .delete(schema.rooms)
+    .where(and(eq(schema.rooms.id, id), eq(schema.rooms.propertyId, propertyId)))
+    .returning();
+  return deleted ? mapRoom(deleted) : null;
+}
+
 export async function getAvailability(propertyId: string, checkIn: string, checkOut: string) {
   const db = getDb();
   const [roomTypes, rooms, pricingRules, overlappingBookings] = await Promise.all([
