@@ -1,5 +1,5 @@
 ---
-from: codex (S01 audit)
+from: codex (S05 audit)
 to: next-agent
 date: 2026-05-17T00:25:00+02:00
 topic: Audit follow-up after development-status review
@@ -12,7 +12,7 @@ read_first:
   - _docs/AGENT-PROTOCOL.md
   - _docs/agent-handoffs/active/opus-s02-to-next-agent-deferred-items.md
   - _docs/audits/2026-05-17-development-status-audit.md
-  - _docs/agent-reports/2026-05-17/codex-s01-development-status-audit.md
+  - _docs/agent-reports/2026-05-17/codex-s05-development-status-audit.md
 ---
 
 # Audit follow-up dispatch

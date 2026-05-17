@@ -1,6 +1,6 @@
-# Codex S01 — Development Status Audit Session
+# Codex S05 — Development Status Audit Session
 
-> **Session:** Codex S01 audit  
+> **Session:** Codex S05 audit  
 > **Agent:** Codex  
 > **Date:** 2026-05-17  
 > **Active window:** 2026-05-17 00:16-00:25 CEST  
@@ -38,8 +38,8 @@ Build note: Next.js build passed but emitted one Recharts width/height warning.
 ## Artifacts Written
 
 - `_docs/audits/2026-05-17-development-status-audit.md`
-- `_docs/agent-reports/2026-05-17/codex-s01-development-status-audit.md`
-- `_docs/agent-handoffs/active/codex-s01-to-next-agent-audit-followup.md`
+- `_docs/agent-reports/2026-05-17/codex-s05-development-status-audit.md`
+- `_docs/agent-handoffs/active/codex-s05-to-next-agent-audit-followup.md`
 
 ## Audit Result
 
@@ -57,4 +57,4 @@ Main pending items:
 
 ## End State
 
-No app source was modified. Documentation-only audit artifacts are uncommitted on `codex/development-status-audit`.
+No app source was modified. Documentation-only audit artifacts were committed on `codex/development-status-audit`.

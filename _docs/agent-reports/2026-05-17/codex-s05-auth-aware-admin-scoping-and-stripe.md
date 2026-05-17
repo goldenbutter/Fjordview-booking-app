@@ -11,7 +11,7 @@
 
 | Time (CEST) | Commit | Slice |
 |---|---|---|
-| 2026-05-17 02:54 | `271736e` | Acknowledged active Codex S01 and Opus S02 handoffs |
+| 2026-05-17 02:54 | `271736e` | Acknowledged active Codex S05 and Opus S02 handoffs |
 | 2026-05-17 03:07 | `cfab950` | Auth-aware admin scoping, verifier correction, tests |
 
 ## Slice: Auth-Aware Admin Scoping
