@@ -57,7 +57,9 @@ any property that already exists by slug.
 | Path | Schedule | What it does |
 |---|---|---|
 | `/api/cron/daily` | `0 8 * * *` (08:00 UTC) | Sends pre-arrival reminders (tomorrow's check-ins), post-stay thank-yous (yesterday's check-outs), and backfills any missing cleaning tasks for today's check-outs. |
-| `/api/cron/cleanup` | `*/30 * * * *` | Cancels pending bookings older than 60 minutes (auto-release stale unpaid holds). |
+| `/api/cron/cleanup` | `0 9 * * *` (09:00 UTC) | Cancels pending bookings older than 60 minutes (auto-release stale unpaid holds). |
+
+> **Hobby-tier note:** Vercel Hobby caps cron schedules to once-per-day, so the cleanup job runs daily rather than every 30 minutes. Pending payments that haven't been confirmed still expire — they just expire on the next daily fire instead of within 30 minutes. Upgrade to Pro if you need sub-daily cron granularity.
 
 Both routes verify the `CRON_SECRET` bearer token sent by Vercel Cron. Sanity-check manually:
 
