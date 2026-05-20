@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, lt, sql } from "drizzle-orm";
 import { getDb } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
 import {
@@ -1075,6 +1075,112 @@ export async function getGuestById(propertyId: string, guestId: string) {
   const bookings = bookingsRows.map((row) => enrichBooking(mapBooking(row), [guest], rooms, roomTypes));
 
   return { guest, bookings };
+}
+
+// ---- Cron helpers (daily reminders / thank-yous / cleaning + stale cleanup) ----
+
+// Return booking refs whose check-in date matches `checkIn` and whose status is in `statuses`.
+// Cron picks reminder candidates with the default ["confirmed"]; admin-confirmed pending
+// stays are excluded on purpose so guests aren't reminded of stays we may auto-cancel.
+export async function getBookingRefsForCheckInDate(
+  checkIn: string,
+  statuses: Booking["status"][] = ["confirmed"],
+): Promise<string[]> {
+  if (statuses.length === 0) return [];
+  const db = getDb();
+  const rows = await db
+    .select({ ref: schema.bookings.bookingRef })
+    .from(schema.bookings)
+    .where(
+      and(
+        eq(schema.bookings.checkIn, checkIn),
+        inArray(schema.bookings.status, statuses),
+      ),
+    );
+  return rows.map((r) => r.ref);
+}
+
+// Return booking refs whose check-out date matches `checkOut`, excluding cancelled/no-show.
+// Cron uses this for post-stay thank-yous the morning after departure.
+export async function getBookingRefsForCheckOutDate(checkOut: string): Promise<string[]> {
+  const db = getDb();
+  const rows = await db
+    .select({ ref: schema.bookings.bookingRef })
+    .from(schema.bookings)
+    .where(
+      and(
+        eq(schema.bookings.checkOut, checkOut),
+        sql`${schema.bookings.status} NOT IN ('cancelled', 'no_show')`,
+      ),
+    );
+  return rows.map((r) => r.ref);
+}
+
+// Idempotent insert: only writes a cleaning task if no row already exists for the
+// (property, room, date) triple. Returns whether a new row was created.
+export async function ensureCleaningTask(input: {
+  propertyId: string;
+  roomId: string;
+  taskDate: string;
+  bookingId?: string;
+}): Promise<{ created: boolean; task: CleaningTask | null }> {
+  const db = getDb();
+  const existing = await db
+    .select()
+    .from(schema.cleaningTasks)
+    .where(
+      and(
+        eq(schema.cleaningTasks.propertyId, input.propertyId),
+        eq(schema.cleaningTasks.roomId, input.roomId),
+        eq(schema.cleaningTasks.taskDate, input.taskDate),
+      ),
+    )
+    .limit(1);
+  if (existing.length > 0) {
+    return { created: false, task: mapCleaningTask(existing[0]) };
+  }
+  const [inserted] = await db
+    .insert(schema.cleaningTasks)
+    .values({
+      propertyId: input.propertyId,
+      roomId: input.roomId,
+      bookingId: input.bookingId,
+      taskDate: input.taskDate,
+      status: "pending",
+    })
+    .returning();
+  return { created: true, task: inserted ? mapCleaningTask(inserted) : null };
+}
+
+// Cancel pending bookings whose createdAt is older than `cutoff`. Returns the
+// canceled refs so the caller can log a summary (and so the cleanup cron's
+// response is useful for "did anything happen?" verification).
+export async function cancelStalePendingBookings(cutoff: Date): Promise<{ cancelledRefs: string[] }> {
+  const db = getDb();
+  const cancelled = await db
+    .update(schema.bookings)
+    .set({
+      status: "cancelled",
+      cancellationReason: "auto-cancelled: pending payment expired",
+      cancelledAt: new Date(),
+      roomId: null,
+      updatedAt: new Date(),
+    })
+    .where(
+      and(
+        eq(schema.bookings.status, "pending"),
+        lt(schema.bookings.createdAt, cutoff),
+      ),
+    )
+    .returning({ ref: schema.bookings.bookingRef, id: schema.bookings.id });
+
+  if (cancelled.length > 0) {
+    const ids = cancelled.map((r) => r.id);
+    await db
+      .delete(schema.cleaningTasks)
+      .where(inArray(schema.cleaningTasks.bookingId, ids));
+  }
+  return { cancelledRefs: cancelled.map((r) => r.ref) };
 }
 
 // ---- Calendar (admin) ----

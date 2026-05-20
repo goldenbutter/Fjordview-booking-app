@@ -260,3 +260,99 @@ export const demoCleaningTasks: CleaningTask[] = [
     assignedTo: "Maja",
   },
 ];
+
+// Secondary property — exists so multi-tenant scoping can be verified end-to-end.
+// Slug "aurora-cabin" is intentionally outside the demo seed flow's default
+// DEFAULT_PROPERTY_SLUG; admin queries should NOT surface its data when the
+// signed-in admin is scoped to Fjordview, and vice versa.
+export const demoSecondaryProperty: Property = {
+  id: "prop_aurora",
+  name: "Aurora Cabin",
+  slug: "aurora-cabin",
+  address: "Nordlysveien 7",
+  city: "Tromsø",
+  postalCode: "9008",
+  country: "NO",
+  timezone: "Europe/Oslo",
+  currency: "NOK",
+  heroImageUrl: "https://images.unsplash.com/photo-1531366936337-7c912a4589a7?auto=format&fit=crop&w=1600&q=80",
+  contactEmail: "hello@auroracabin.example",
+  contactPhone: "+47 000 11 111",
+  bookingRefPrefix: "AC",
+  checkInTime: "16:00",
+  checkOutTime: "10:00",
+  primaryColor: "#1E3A8A",
+  accentColor: "#22D3EE",
+  cancellationInfo: {
+    no: "Gratis avbestilling inntil 72 timer før innsjekk.",
+    en: "Free cancellation up to 72 hours before check-in.",
+  },
+};
+
+export const demoSecondaryRoomTypes: RoomType[] = [
+  {
+    id: "rt_aurora_cabin_loft",
+    propertyId: demoSecondaryProperty.id,
+    name: { no: "Loft med nordlysvindu", en: "Loft with aurora window" },
+    description: {
+      no: "Romslig loft med stort takvindu mot himmelen.",
+      en: "Spacious loft with a large skylight facing the night sky.",
+    },
+    slug: "loft",
+    hasBathroom: true,
+    maxGuests: 2,
+    basePrice: 219500,
+    amenities: ["wifi", "tv", "private_bathroom", "towels", "linens", "skylight"],
+    photoUrls: [
+      "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80",
+    ],
+    sortOrder: 1,
+    active: true,
+  },
+  {
+    id: "rt_aurora_cabin_double",
+    propertyId: demoSecondaryProperty.id,
+    name: { no: "Dobbeltrom", en: "Double room" },
+    description: {
+      no: "Komfortabelt dobbeltrom med utsikt mot fjellene.",
+      en: "Comfortable double room with mountain view.",
+    },
+    slug: "double",
+    hasBathroom: true,
+    maxGuests: 2,
+    basePrice: 149500,
+    amenities: ["wifi", "tv", "private_bathroom", "towels", "linens"],
+    photoUrls: [
+      "https://images.unsplash.com/photo-1551776235-dde6d4829808?auto=format&fit=crop&w=1200&q=80",
+    ],
+    sortOrder: 2,
+    active: true,
+  },
+];
+
+export const demoSecondaryRooms: Room[] = [
+  ["L1", "rt_aurora_cabin_loft", 2],
+  ["101", "rt_aurora_cabin_double", 1],
+  ["102", "rt_aurora_cabin_double", 1],
+].map(([roomNumber, roomTypeId, floor]) => ({
+  id: `aurora_room_${roomNumber}`,
+  propertyId: demoSecondaryProperty.id,
+  roomTypeId: String(roomTypeId),
+  roomNumber: String(roomNumber),
+  floor: Number(floor),
+  active: true,
+}));
+
+export const demoSecondaryCancellationPolicy: CancellationPolicy = {
+  id: "policy_aurora_standard",
+  propertyId: demoSecondaryProperty.id,
+  name: "Standard",
+  description: {
+    no: "Gratis avbestilling inntil 72 timer før innsjekk.",
+    en: "Free cancellation up to 72 hours before check-in.",
+  },
+  refundPct: 100,
+  deadlineHours: 72,
+  isDefault: true,
+  active: true,
+};

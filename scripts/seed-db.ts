@@ -11,48 +11,72 @@ import {
   demoProperty,
   demoRoomTypes,
   demoRooms,
+  demoSecondaryCancellationPolicy,
+  demoSecondaryProperty,
+  demoSecondaryRoomTypes,
+  demoSecondaryRooms,
 } from "../src/lib/db/seed";
+import type {
+  Booking,
+  CancellationPolicy,
+  CleaningTask,
+  Guest,
+  PricingRule,
+  Property,
+  Room,
+  RoomType,
+} from "../src/types";
 
-async function main() {
-  const client = postgres(process.env.DATABASE_URL!, { prepare: false, max: 1 });
-  const db = drizzle(client, { schema });
+type Db = ReturnType<typeof drizzle<typeof schema>>;
 
+type PropertyBundle = {
+  property: Property;
+  roomTypes: RoomType[];
+  rooms: Room[];
+  pricingRules: PricingRule[];
+  cancellationPolicy: CancellationPolicy;
+  guests: Guest[];
+  bookings: Booking[];
+  cleaningTasks: CleaningTask[];
+};
+
+async function seedPropertyBundle(db: Db, bundle: PropertyBundle) {
   const existing = await db
     .select({ id: schema.properties.id, name: schema.properties.name })
     .from(schema.properties)
-    .where(eq(schema.properties.slug, demoProperty.slug));
+    .where(eq(schema.properties.slug, bundle.property.slug));
 
   if (existing.length > 0) {
-    console.log(`Property '${demoProperty.slug}' already exists (id=${existing[0].id}). Skipping seed.`);
-    console.log("To re-seed, run scripts/reset-db.ts first.");
-    await client.end();
+    console.log(
+      `Property '${bundle.property.slug}' already exists (id=${existing[0].id}). Skipping.`,
+    );
     return;
   }
 
   const [property] = await db
     .insert(schema.properties)
     .values({
-      name: demoProperty.name,
-      slug: demoProperty.slug,
-      address: demoProperty.address,
-      city: demoProperty.city,
-      postalCode: demoProperty.postalCode,
-      country: demoProperty.country,
-      timezone: demoProperty.timezone,
-      currency: demoProperty.currency,
-      contactEmail: demoProperty.contactEmail,
-      contactPhone: demoProperty.contactPhone,
-      bookingRefPrefix: demoProperty.bookingRefPrefix,
-      primaryColor: demoProperty.primaryColor,
-      accentColor: demoProperty.accentColor,
-      checkInTime: demoProperty.checkInTime,
-      checkOutTime: demoProperty.checkOutTime,
-      cancellationInfo: demoProperty.cancellationInfo,
+      name: bundle.property.name,
+      slug: bundle.property.slug,
+      address: bundle.property.address,
+      city: bundle.property.city,
+      postalCode: bundle.property.postalCode,
+      country: bundle.property.country,
+      timezone: bundle.property.timezone,
+      currency: bundle.property.currency,
+      contactEmail: bundle.property.contactEmail,
+      contactPhone: bundle.property.contactPhone,
+      bookingRefPrefix: bundle.property.bookingRefPrefix,
+      primaryColor: bundle.property.primaryColor,
+      accentColor: bundle.property.accentColor,
+      checkInTime: bundle.property.checkInTime,
+      checkOutTime: bundle.property.checkOutTime,
+      cancellationInfo: bundle.property.cancellationInfo,
     })
     .returning();
 
   const roomTypeIdMap = new Map<string, string>();
-  for (const rt of demoRoomTypes) {
+  for (const rt of bundle.roomTypes) {
     const [inserted] = await db
       .insert(schema.roomTypes)
       .values({
@@ -73,7 +97,7 @@ async function main() {
   }
 
   const roomIdMap = new Map<string, string>();
-  for (const r of demoRooms) {
+  for (const r of bundle.rooms) {
     const [inserted] = await db
       .insert(schema.rooms)
       .values({
@@ -87,7 +111,7 @@ async function main() {
     roomIdMap.set(r.id, inserted.id);
   }
 
-  for (const rule of demoPricingRules) {
+  for (const rule of bundle.pricingRules) {
     await db.insert(schema.pricingRules).values({
       propertyId: property.id,
       roomTypeId: rule.roomTypeId ? roomTypeIdMap.get(rule.roomTypeId) ?? null : null,
@@ -105,16 +129,16 @@ async function main() {
 
   await db.insert(schema.cancellationPolicies).values({
     propertyId: property.id,
-    name: demoCancellationPolicy.name,
-    description: demoCancellationPolicy.description,
-    refundPct: demoCancellationPolicy.refundPct,
-    deadlineHours: demoCancellationPolicy.deadlineHours,
-    isDefault: demoCancellationPolicy.isDefault,
-    active: demoCancellationPolicy.active,
+    name: bundle.cancellationPolicy.name,
+    description: bundle.cancellationPolicy.description,
+    refundPct: bundle.cancellationPolicy.refundPct,
+    deadlineHours: bundle.cancellationPolicy.deadlineHours,
+    isDefault: bundle.cancellationPolicy.isDefault,
+    active: bundle.cancellationPolicy.active,
   });
 
   const guestIdMap = new Map<string, string>();
-  for (const g of demoGuests) {
+  for (const g of bundle.guests) {
     const [inserted] = await db
       .insert(schema.guests)
       .values({
@@ -133,7 +157,7 @@ async function main() {
   }
 
   const bookingIdMap = new Map<string, string>();
-  for (const b of demoBookings) {
+  for (const b of bundle.bookings) {
     const [inserted] = await db
       .insert(schema.bookings)
       .values({
@@ -158,7 +182,7 @@ async function main() {
     bookingIdMap.set(b.id, inserted.id);
   }
 
-  for (const t of demoCleaningTasks) {
+  for (const t of bundle.cleaningTasks) {
     await db.insert(schema.cleaningTasks).values({
       propertyId: property.id,
       roomId: roomIdMap.get(t.roomId)!,
@@ -169,15 +193,47 @@ async function main() {
     });
   }
 
-  console.log(`Seeded ${demoProperty.name}`);
+  console.log(`Seeded ${bundle.property.name}`);
   console.log(`  property_id          ${property.id}`);
-  console.log(`  room_types           ${demoRoomTypes.length}`);
-  console.log(`  rooms                ${demoRooms.length}`);
-  console.log(`  pricing_rules        ${demoPricingRules.length}`);
+  console.log(`  room_types           ${bundle.roomTypes.length}`);
+  console.log(`  rooms                ${bundle.rooms.length}`);
+  console.log(`  pricing_rules        ${bundle.pricingRules.length}`);
   console.log(`  cancellation_policy  1`);
-  console.log(`  guests               ${demoGuests.length}`);
-  console.log(`  bookings             ${demoBookings.length}`);
-  console.log(`  cleaning_tasks       ${demoCleaningTasks.length}`);
+  console.log(`  guests               ${bundle.guests.length}`);
+  console.log(`  bookings             ${bundle.bookings.length}`);
+  console.log(`  cleaning_tasks       ${bundle.cleaningTasks.length}`);
+}
+
+async function main() {
+  const client = postgres(process.env.DATABASE_URL!, { prepare: false, max: 1 });
+  const db = drizzle(client, { schema });
+
+  const bundles: PropertyBundle[] = [
+    {
+      property: demoProperty,
+      roomTypes: demoRoomTypes,
+      rooms: demoRooms,
+      pricingRules: demoPricingRules,
+      cancellationPolicy: demoCancellationPolicy,
+      guests: demoGuests,
+      bookings: demoBookings,
+      cleaningTasks: demoCleaningTasks,
+    },
+    {
+      property: demoSecondaryProperty,
+      roomTypes: demoSecondaryRoomTypes,
+      rooms: demoSecondaryRooms,
+      pricingRules: [],
+      cancellationPolicy: demoSecondaryCancellationPolicy,
+      guests: [],
+      bookings: [],
+      cleaningTasks: [],
+    },
+  ];
+
+  for (const bundle of bundles) {
+    await seedPropertyBundle(db, bundle);
+  }
 
   await client.end();
 }

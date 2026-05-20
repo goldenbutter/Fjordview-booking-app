@@ -38,8 +38,17 @@ This file maps the OPUS prompt acceptance criteria to the current prototype.
 
 - Full database schema from the prompt is only partially represented in Drizzle.
 - Admin CRUD API matrix is not complete.
-- Real auth guard for `/admin` is not enabled.
+- Real auth guard for `/admin` is not enabled by default (flips on with
+  `LOCAL_DEMO_MODE=false` once Supabase + `admin_users` are seeded).
 - Confirmation/cancellation email React templates are minimal.
-- Multi-tenant isolation must be verified after Supabase persistence is added.
 - Public rate limiting is an in-memory prototype helper; production should use
   a durable edge/runtime store.
+
+## Vercel-Ready Items (claude/deploy-readiness)
+
+- Daily cron now sends reminders (next-day check-ins), thank-yous (previous-day
+  check-outs), and backfills cleaning tasks for today's check-outs.
+- Cleanup cron auto-cancels pending bookings older than 60 minutes.
+- Seed exports a secondary `aurora-cabin` property so multi-tenant admin
+  scoping can be verified end-to-end by inserting a second `admin_users` row.
+- `DEPLOY.md` documents the Vercel env var matrix and the post-deploy checklist.
