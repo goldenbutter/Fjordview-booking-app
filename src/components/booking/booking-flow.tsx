@@ -8,6 +8,7 @@ import {
   CircleCheck,
   Coffee,
   CreditCard,
+  LayoutDashboard,
   Languages,
   MapPin,
   Mountain,
@@ -17,6 +18,7 @@ import {
   Wifi,
 } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -269,9 +271,18 @@ export function BookingFlow({ property }: { property: Property }) {
             <p className="text-xs font-semibold uppercase text-teal-700">GuestHub prototype</p>
             <h1 className="text-2xl font-semibold text-slate-950">{property.name}</h1>
           </div>
-          <div className="flex items-center gap-2 text-sm text-slate-600">
-            <MapPin className="h-4 w-4 text-teal-600" />
-            {property.city}, {property.country}
+          <div className="flex flex-wrap items-center gap-4 text-sm text-slate-600">
+            <div className="flex items-center gap-2">
+              <MapPin className="h-4 w-4 text-teal-600" />
+              {property.city}, {property.country}
+            </div>
+            <Link
+              href="/admin"
+              className="inline-flex items-center gap-2 rounded-md border border-teal-200 px-3 py-2 font-semibold text-teal-700 hover:bg-teal-50"
+            >
+              <LayoutDashboard className="h-4 w-4" />
+              Admin
+            </Link>
           </div>
         </div>
       </header>
