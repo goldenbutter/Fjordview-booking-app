@@ -1,4 +1,10 @@
-# Codex Session Report - Phase 1 Foundation
+# Codex S01 Session Report - Phase 1 Foundation
+
+## Session Metadata
+
+- Session ID: `S01`
+- Agent: Codex
+- Date: 2026-05-16
 
 ## Context
 

@@ -2,6 +2,11 @@
 
 This file maps the OPUS prompt acceptance criteria to the current prototype.
 
+## Document Metadata
+
+- Created by: Codex `S01`
+- Initial scope: local demo prototype through OPUS review #1 fixes
+
 ## Demo-Ready In Local Mode
 
 - Guest can browse rooms and search availability for dates.

@@ -1,4 +1,10 @@
-# OPUS Review #1 Fixes
+# Codex S01 - OPUS Review #1 Fixes
+
+## Session Metadata
+
+- Session ID: `S01`
+- Agent: Codex
+- Date: 2026-05-16
 
 ## Source
 

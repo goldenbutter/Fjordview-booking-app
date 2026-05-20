@@ -1,4 +1,10 @@
-# Codex Session Report - Phase 2 Guest Booking
+# Codex S01 Session Report - Phase 2 Guest Booking
+
+## Session Metadata
+
+- Session ID: `S01`
+- Agent: Codex
+- Date: 2026-05-16
 
 ## Phase Goal
 

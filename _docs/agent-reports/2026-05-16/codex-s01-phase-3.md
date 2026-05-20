@@ -1,4 +1,10 @@
-# Codex Session Report - Phase 3 Admin Prototype
+# Codex S01 Session Report - Phase 3 Admin Prototype
+
+## Session Metadata
+
+- Session ID: `S01`
+- Agent: Codex
+- Date: 2026-05-16
 
 ## Phase Goal
 
